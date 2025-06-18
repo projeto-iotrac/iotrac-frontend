@@ -1,10 +1,11 @@
 import Dropdown from "@/components/Dropdown";
 import React, { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import { Colors } from "react-native/Libraries/NewAppScreen";
+import Colors from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function NewDevice() {
-    const [selectedValue, setSelectedValue] = useState("java");
+    const [selectedValue, setSelectedValue] = useState("smart-lamp");
 
     return (
         <View style={{ flex: 1, paddingHorizontal: 16 }}>
@@ -26,6 +27,7 @@ export default function NewDevice() {
                         { label: 'Smart TV', value: 'smart-tv' },
                         { label: 'Termostato Inteligente', value: 'smart-thermostat' }
                     ]}
+                    value={selectedValue}
                     onSelect={(value) => setSelectedValue(value)}
                 />
             </View>
@@ -38,7 +40,12 @@ export default function NewDevice() {
                     paddingHorizontal: 20,
                     marginTop: 16,
                     alignItems: 'center',
+                    borderRadius: 8,
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    gap: 8,
                 }}>
+                <Ionicons name="add-circle" size={20} style={{color: '#FFF'}} />
                 <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Vincular</Text>
             </TouchableOpacity>
         </View>

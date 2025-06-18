@@ -7,9 +7,10 @@ type DropdownProps = {
   items: DropdownItem[];
   onSelect: (value: string) => void;
   placeholder: string;
+  value?: string;
 };
 
-const Dropdown: React.FC<DropdownProps> = ({ items, onSelect, placeholder }) => {
+const Dropdown: React.FC<DropdownProps> = ({ items, onSelect, placeholder, value }) => {
   const [open, setOpen] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
 
@@ -31,14 +32,15 @@ const Dropdown: React.FC<DropdownProps> = ({ items, onSelect, placeholder }) => 
     outputRange: ['0deg', '180deg'],
   });
 
+  const selectedLabel = items.find(item => item.value === value)?.label;
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.button}
         onPress={() => setOpen(!open)}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.buttonText}>{placeholder}</Text>
+        activeOpacity={0.8}>
+        <Text style={styles.buttonText}>{selectedLabel || placeholder}</Text>
         <Animated.View style={{ transform: [{ rotate: rotateIcon }] }}>
           <Ionicons name="chevron-down" size={20} color="#555" />
         </Animated.View>

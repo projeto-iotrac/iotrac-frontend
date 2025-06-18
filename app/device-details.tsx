@@ -1,12 +1,14 @@
 import Colors from "@/constants/Colors";
-import { useRouter } from "expo-router";
 import { ScrollView, Text, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function DeviceDetails() {
-  const router = useRouter();
-
   const handleDisableProtection = () => {
     alert("Proteção desativada.");
+  };
+
+  const handleEnableProtection = () => {
+    alert("Proteção ativada.");
   };
 
   return (
@@ -25,7 +27,8 @@ export default function DeviceDetails() {
         Descrição: Lorem ipsum dolor sit amet consectetur adipisicing elit.
       </Text>
 
-      <TouchableOpacity
+      {/* Exibir quando a proteção estiver ativada
+       <TouchableOpacity
         onPress={handleDisableProtection}
         style={{
           backgroundColor: Colors.error,
@@ -34,8 +37,31 @@ export default function DeviceDetails() {
           marginTop: 8,
           width: '100%',
           alignItems: 'center',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          gap: 8,
+          borderRadius: 8,
         }}>
-        <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Desativar Proteção</Text>
+        <Ionicons name="alert-circle" size={20} style={{color: '#FFF'}} /> 
+        <Text style={{ color: '#FFF', fontWeight: 'bold', alignItems: 'center', justifyContent: "center", display: "flex" }}>Desativar Proteção</Text>
+      </TouchableOpacity> */}
+
+      <TouchableOpacity
+        onPress={handleEnableProtection}
+        style={{
+          backgroundColor: Colors.primary,
+          paddingVertical: 12,
+          paddingHorizontal: 20,
+          marginTop: 8,
+          width: '100%',
+          alignItems: 'center',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          gap: 8,
+          borderRadius: 8,
+        }}>
+        <Ionicons name="shield" size={20} style={{color: '#FFF'}} /> 
+        <Text style={{ color: '#FFF', fontWeight: 'bold', alignItems: 'center', justifyContent: "center", display: "flex" }}>Ativar Proteção</Text>
       </TouchableOpacity>
     </ScrollView>
   );
