@@ -1,300 +1,412 @@
-# IOTRAC Frontend
+# 📱 IOTRAC Frontend - App Mobile
 
-Frontend React Native/Expo para o sistema IOTRAC - Gerenciamento de Dispositivos IoT com Proteção.
+[![React Native](https://img.shields.io/badge/React%20Native-0.72+-blue.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-49+-green.svg)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## �� Como Executar
+## 📋 Visão Geral
 
-### Script Principal (Recomendado)
-```bash
-cd iotrac-frontend
-./start-iotrac.sh
+O **IOTRAC Frontend** é um aplicativo mobile desenvolvido em React Native/Expo que oferece uma interface intuitiva para gerenciar dispositivos IoT com sistema de proteção integrado. Com design moderno e funcionalidades avançadas, o app permite controle total sobre seus dispositivos IoT de forma segura e eficiente.
+
+### ✨ Principais Funcionalidades
+
+- 📱 **Interface Mobile Nativa**: App otimizado para dispositivos móveis
+- 🔐 **Controle de Proteção**: Ativar/desativar proteção por dispositivo
+- 📊 **Monitoramento em Tempo Real**: Status atualizado automaticamente
+- 🎯 **Gerenciamento Intuitivo**: Adicionar, remover e configurar dispositivos
+- 📈 **Logs Detalhados**: Visualização de atividades do sistema
+- 🌐 **Conexão Segura**: Comunicação criptografada com o backend
+- 🔄 **Sincronização Automática**: Dados sempre atualizados
+
+## 🏗️ Arquitetura do App
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    IOTRAC Frontend - App Mobile             │
+├─────────────────────────────────────────────────────────────┤
+│  CAMADA 1: Screens (src/screens/)                          │
+│  ├── 📱 Lista de Dispositivos                              │
+│  ├── ➕ Registro de Dispositivos                            │
+│  ├── 🔍 Detalhes do Dispositivo                            │
+│  └── ⚙️ Configurações e Logs                               │
+├─────────────────────────────────────────────────────────────┤
+│  CAMADA 2: Components (src/components/)                    │
+│  ├── 🎴 Cards de Dispositivos                              │
+│  ├── 📋 Menus e Dropdowns                                  │
+│  ├── 🔗 Status de Conexão                                  │
+│  └── 🎨 Componentes UI                                     │
+├─────────────────────────────────────────────────────────────┤
+│  CAMADA 3: Services (src/services/)                        │
+│  ├── 🌐 API Communication                                  │
+│  ├── 🔐 Authentication                                     │
+│  └── 📊 Data Management                                     │
+├─────────────────────────────────────────────────────────────┤
+│  CAMADA 4: Hooks & Utils (src/hooks/, src/utils/)          │
+│  ├── 🎣 Custom Hooks                                       │
+│  ├── 🛠️ Utility Functions                                  │
+│  └── 📝 Type Definitions                                   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Manual (Se necessário)
-```bash
-# Terminal 1 - Backend
-cd iotrac-backend
-source venv/bin/activate
-uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
-
-# Terminal 2 - Frontend
-cd iotrac-frontend
-yarn install
-yarn start
-```
-
-## 🔧 Solução de Problemas
-
-### Problema: Script trava na instalação das dependências
-**Sintomas:** O script para na mensagem "📦 Instalando dependências do frontend..." e não retorna o prompt.
-
-**Soluções:**
-
-1. **Instalação manual das dependências:**
-   ```bash
-   cd iotrac-frontend
-   yarn install --verbose
-   ```
-
-2. **Limpe o cache e reinstale:**
-   ```bash
-   cd iotrac-frontend
-   rm -rf node_modules yarn.lock
-   yarn install
-   ```
-
-3. **Verifique a conexão com a internet:**
-   ```bash
-   ./scripts/test-connectivity.sh
-   ```
-
-### Problema: Backend não inicia
-**Soluções:**
-```bash
-cd iotrac-backend
-source venv/bin/activate
-pip install -r requirements.txt
-uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-### Problema: Frontend não inicia
-**Soluções:**
-```bash
-cd iotrac-frontend
-yarn install
-yarn start
-```
-
-### Problema: Portas ocupadas
-**Soluções:**
-```bash
-# Matar processos nas portas
-sudo fuser -k 8000/tcp  # Backend
-sudo fuser -k 19000/tcp # Expo
-sudo fuser -k 8081/tcp  # Metro
-```
-
-## 📱 Acessos
-
-- **Backend API:** http://localhost:8000
-- **Expo DevTools:** http://localhost:19002
-- **Web:** http://localhost:19006
-- **Mobile:** http://localhost:8081
-
-## 📋 Pré-requisitos
-
-- Node.js 18+
-- Yarn ou npm
-- Python 3.8+
-- pip
-- curl
-
-## 🛠️ Scripts Disponíveis
-
-### `start-iotrac.sh`
-Script principal que inicia backend e frontend automaticamente com:
-- ✅ Verificação de dependências do sistema
-- ✅ Limpeza de processos anteriores
-- ✅ Instalação automática de dependências
-- ✅ Timeout para evitar travamentos
-- ✅ Monitoramento de processos
-- ✅ Tratamento de erros robusto
-
-### `scripts/reset-frontend.sh`
-Reseta completamente o frontend (limpa cache, node_modules, etc.).
-
-### `scripts/test-connectivity.sh`
-Testa a conectividade com servidores externos.
-
-### `scripts/link-configs.sh`
-Cria symlinks dos arquivos de configuração na raiz.
-
-## 🚀 Configuração Rápida
+## 🚀 Instalação Rápida
 
 ### Pré-requisitos
-- Node.js (versão 16 ou superior)
-- npm ou yarn
-- Expo CLI
+- Node.js 18+ 
+- Yarn ou npm
+- Expo CLI (`npm install -g @expo/cli`)
 - Backend IOTRAC rodando
 
-### Instalação e Execução
+### Passo a Passo
 
-#### Opção 1: Script Automático (Recomendado)
+1. **Clone o repositório**
 ```bash
-# Execute o script que inicia backend e frontend automaticamente
-./scripts/start-iotrac.sh
+git clone https://github.com/seu-usuario/iotrac-frontend.git
+cd iotrac-frontend
 ```
 
-#### Opção 2: Manual
-1. **Instalar dependências:**
+2. **Instale as dependências**
 ```bash
 yarn install
 ```
 
-2. **Verificar configuração da API:**
-O arquivo `src/constants/ApiConfig.ts` deve estar configurado com o IP correto do backend:
+3. **Configure a API**
+Edite `src/constants/ApiConfig.ts`:
 ```typescript
-BASE_URL: 'http://192.168.112.180:8000', // Ajuste para o IP do seu servidor
+BASE_URL: 'http://192.168.1.100:8000', // IP do seu backend
 ```
 
-3. **Iniciar o projeto:**
-```bash
-yarn start
-```
-
-4. **Executar no dispositivo:**
-- Use o Expo Go no dispositivo móvel
-- Escaneie o QR code
-- O app deve carregar automaticamente
-
-## 🛠️ Scripts de Configuração
-
-Se alguma ferramenta reclamar que não encontra o arquivo de configuração na raiz, rode:
-
+4. **Prepare as configurações**
 ```bash
 yarn prepare-configs
 ```
 
-Isso cria symlinks automáticos dos arquivos de configuração da pasta `config/` para a raiz do projeto.
+5. **Inicie o projeto**
+```bash
+yarn start
+```
 
-Assim, tudo funciona normalmente com qualquer ferramenta!
+## ⚙️ Configuração
 
-## 📱 Funcionalidades
+### Configuração da API
 
-### ✅ Implementado
-- **Listagem de Dispositivos**: Carrega dispositivos dinamicamente da API
-- **Registro de Dispositivos**: Formulário completo com validação de IP
-- **Detalhes do Dispositivo**: Informações completas e controle de proteção
-- **Controle de Proteção**: Ativar/desativar proteção por dispositivo
-- **Logs do Sistema**: Visualização de logs em tempo real
-- **Status de Conexão**: Indicador de conectividade com a API
-- **Remoção de Dispositivos**: Botão de lixeira para remover dispositivos
+O arquivo `src/constants/ApiConfig.ts` controla a conexão com o backend:
 
-### 🔧 Endpoints Utilizados
-- `GET /devices` - Listar dispositivos
-- `POST /device/register` - Registrar novo dispositivo
-- `GET /devices/{id}` - Detalhes do dispositivo
-- `DELETE /devices/{id}` - Remover dispositivo
-- `GET /devices/{id}/protection` - Status de proteção do dispositivo
-- `POST /devices/{id}/protection/toggle` - Alternar proteção do dispositivo
-- `GET /status` - Status de proteção global
-- `POST /toggle_protection` - Alternar proteção global
-- `GET /logs` - Logs do sistema
+```typescript
+export const ApiConfig = {
+  BASE_URL: 'http://192.168.1.100:8000', // Ajuste para o IP do seu servidor
+  TIMEOUT: 10000,
+  RETRY_ATTEMPTS: 3
+};
+```
 
-## 🏗️ Estrutura do Projeto
+### Configuração do Expo
+
+Os arquivos de configuração estão organizados na pasta `config/`:
+
+- `app.config.js` - Configuração principal do Expo
+- `app.json` - Metadados do aplicativo
+- `babel.config.js` - Configuração do Babel
+- `tsconfig.json` - Configuração do TypeScript
+- `eslint.config.js` - Regras de linting
+
+### Scripts de Configuração
+
+```bash
+# Criar symlinks dos arquivos de configuração
+yarn prepare-configs
+
+# Resetar completamente o frontend
+./scripts/reset-frontend.sh
+
+# Testar conectividade
+./scripts/test-connectivity.sh
+```
+
+## 🎮 Como Usar
+
+### 1. Iniciando o App
+
+#### Opção A: Script Automático (Recomendado)
+```bash
+./start.sh
+```
+
+#### Opção B: Manual
+```bash
+# Terminal 1 - Backend
+cd ../iotrac-backend
+source venv/bin/activate
+python src/main.py
+
+# Terminal 2 - Frontend
+cd iotrac-frontend
+yarn start
+```
+
+### 2. Acessando o App
+
+- **Expo DevTools**: `http://localhost:19002`
+- **Web**: `http://localhost:19006`
+- **Mobile**: Escaneie o QR code com Expo Go
+
+### 3. Funcionalidades Principais
+
+#### 📱 Lista de Dispositivos
+- Visualize todos os dispositivos registrados
+- Status de proteção em tempo real
+- Pull-to-refresh para atualizar dados
+
+#### ➕ Adicionar Dispositivo
+- Formulário com validação de IP
+- Seleção de tipo de dispositivo
+- Feedback visual de sucesso/erro
+
+#### 🔍 Detalhes do Dispositivo
+- Informações completas do dispositivo
+- Controle de proteção individual
+- Histórico de comandos
+
+#### ⚙️ Configurações
+- Logs do sistema em tempo real
+- Status de conexão com o backend
+- Configurações gerais
+
+## 📊 Estrutura do Projeto
 
 ```
 iotrac-frontend/
 ├── src/
-│   ├── screens/           # Telas da aplicação
-│   │   ├── index.tsx      # Lista de dispositivos
-│   │   ├── new-device.tsx # Registro de dispositivo
+│   ├── screens/              # Telas da aplicação
+│   │   ├── index.tsx         # Lista de dispositivos
+│   │   ├── new-device.tsx    # Registro de dispositivo
 │   │   ├── device-details.tsx # Detalhes e controle
-│   │   ├── settings.tsx   # Configurações e logs
-│   │   └── _layout.tsx    # Layout de navegação
-│   ├── components/        # Componentes reutilizáveis
-│   │   ├── Device.tsx     # Card de dispositivo
-│   │   ├── DevicesMenu.tsx # Menu de dispositivos
-│   │   ├── Dropdown.tsx   # Dropdown customizado
-│   │   └── ConnectionStatus.tsx # Status de conexão
-│   ├── services/          # Serviços de API
-│   │   └── api.ts         # Cliente HTTP e tipos
-│   ├── hooks/             # Hooks customizados
-│   │   └── useApi.ts      # Hook para estados de API
-│   ├── constants/         # Constantes e configurações
-│   │   ├── Colors.ts      # Cores da aplicação
-│   │   └── ApiConfig.ts   # Configuração da API
-│   ├── config/            # Configurações de ambiente
-│   │   └── development.ts # Configuração de desenvolvimento
-│   ├── utils/             # Utilitários (vazio)
-│   └── types/             # Tipos TypeScript (vazio)
-├── assets/                # Recursos estáticos
-├── docs/                  # Documentação e troubleshooting
-└── [arquivos de configuração]
+│   │   ├── settings.tsx      # Configurações e logs
+│   │   └── _layout.tsx       # Layout de navegação
+│   ├── components/           # Componentes reutilizáveis
+│   │   ├── Device.tsx        # Card de dispositivo
+│   │   ├── DevicesMenu.tsx   # Menu de dispositivos
+│   │   ├── Dropdown.tsx      # Dropdown customizado
+│   │   ├── ConnectionStatus.tsx # Status de conexão
+│   │   └── Banner.tsx        # Banner informativo
+│   ├── services/             # Serviços de API
+│   │   └── api.ts            # Comunicação com backend
+│   ├── hooks/                # Custom hooks
+│   │   └── useApi.ts         # Hook para API
+│   ├── constants/            # Constantes
+│   │   ├── ApiConfig.ts      # Configuração da API
+│   │   └── Colors.ts         # Cores do tema
+│   ├── config/               # Configurações
+│   │   └── development.ts    # Configurações de desenvolvimento
+│   ├── types/                # Definições de tipos
+│   └── utils/                # Funções utilitárias
+├── config/                   # Arquivos de configuração
+├── scripts/                  # Scripts utilitários
+├── assets/                   # Recursos estáticos
+└── docs/                     # Documentação
 ```
 
-## 🔧 Configurações
+## 🧪 Desenvolvimento
 
-### Variáveis de Ambiente
-Crie um arquivo `.env` na raiz do projeto:
-```env
-API_BASE_URL=http://192.168.112.180:8000
-API_TIMEOUT=10000
+### Comandos Úteis
+
+```bash
+# Instalar dependências
+yarn install
+
+# Iniciar em modo desenvolvimento
+yarn start
+
+# Executar no Android
+yarn android
+
+# Executar no iOS
+yarn ios
+
+# Executar na web
+yarn web
+
+# Verificar tipos TypeScript
+yarn tsc
+
+# Linting
+yarn lint
+
+# Preparar configurações
+yarn prepare-configs
 ```
 
-### Personalização
-- **Cores**: Edite `src/constants/Colors.ts`
-- **API**: Modifique `src/constants/ApiConfig.ts`
-- **Tipos**: Ajuste interfaces em `src/services/api.ts`
+### Scripts Disponíveis
 
-## 🧪 Testes
+| Script | Descrição |
+|--------|-----------|
+| `start` | Inicia o servidor de desenvolvimento |
+| `android` | Executa no Android |
+| `ios` | Executa no iOS |
+| `web` | Executa na web |
+| `tsc` | Verifica tipos TypeScript |
+| `lint` | Executa linting |
+| `prepare-configs` | Cria symlinks de configuração |
 
-Para testar a integração:
+## 🛡️ Segurança
 
-1. **Backend**: Certifique-se que o backend está rodando
-2. **Dispositivos**: Adicione alguns dispositivos de teste
-3. **Proteção**: Teste ativação/desativação por dispositivo
-4. **Logs**: Verifique logs em tempo real
-5. **Remoção**: Teste o botão de lixeira
+### Medidas Implementadas
+
+- **Validação de Entrada**: Todos os formulários validados
+- **Comunicação Segura**: HTTPS com o backend
+- **Autenticação**: Tokens JWT para API
+- **Sanitização**: Dados limpos antes do envio
+- **Error Handling**: Tratamento robusto de erros
+
+### Boas Práticas
+
+- ✅ Valide sempre dados de entrada
+- ✅ Use HTTPS para comunicação
+- ✅ Implemente timeout em requisições
+- ✅ Trate erros graciosamente
+- ✅ Mantenha dependências atualizadas
 
 ## 📱 Compatibilidade
 
-- **iOS**: 13.0+
-- **Android**: API 21+
-- **Web**: Chrome, Firefox, Safari
+### Plataformas Suportadas
 
-## 🚀 Deploy
+- ✅ **Android**: 6.0+ (API 23+)
+- ✅ **iOS**: 12.0+
+- ✅ **Web**: Chrome, Firefox, Safari, Edge
 
-### Desenvolvimento
+### Dispositivos Testados
+
+- Samsung Galaxy S21
+- iPhone 12
+- iPad Pro
+- Emuladores Android/iOS
+
+## 🆘 Solução de Problemas
+
+### Problemas Comuns
+
+#### ❌ App não carrega
+**Sintomas:** Tela branca ou erro de carregamento
+
+**Soluções:**
 ```bash
-npm start
+# 1. Verificar se o backend está rodando
+curl http://localhost:8000/status
+
+# 2. Verificar configuração da API
+cat src/constants/ApiConfig.ts
+
+# 3. Resetar cache do Expo
+yarn start --clear
+
+# 4. Reinstalar dependências
+rm -rf node_modules yarn.lock
+yarn install
 ```
 
-### Produção
+#### ❌ Dependências não instalam
+**Sintomas:** Erro durante `yarn install`
+
+**Soluções:**
 ```bash
-expo build
+# 1. Limpar cache do yarn
+yarn cache clean
+
+# 2. Verificar versão do Node.js
+node --version  # Deve ser 18+
+
+# 3. Reinstalar com verbose
+yarn install --verbose
+
+# 4. Usar npm como alternativa
+rm yarn.lock
+npm install
 ```
 
-## 🔒 Segurança
+#### ❌ Backend não conecta
+**Sintomas:** Erro de conexão ou timeout
 
-- **HTTPS**: Recomendado para produção
-- **Validação**: Validação de entrada no frontend
-- **Sanitização**: Dados sanitizados antes do envio
-- **Timeout**: Timeout configurável para requisições
+**Soluções:**
+```bash
+# 1. Verificar se o backend está rodando
+cd ../iotrac-backend
+source venv/bin/activate
+python src/main.py
 
-## 🚨 Solução de Problemas
+# 2. Testar conectividade
+./scripts/test-connectivity.sh
 
-### Problema: App não carrega dispositivos
-**Solução:**
-1. Verifique se o backend está rodando:
-   ```bash
-   curl http://192.168.112.180:8000/
-   ```
-2. Confirme a URL da API em `src/constants/ApiConfig.ts`
+# 3. Verificar firewall
+sudo ufw status
 
-### Problema: Erro de CORS
-**Solução:** O backend já está configurado para aceitar requisições de qualquer origem.
+# 4. Verificar IP da API
+ip addr show
+```
 
-### Problema: Dispositivo móvel não consegue acessar
-**Solução:**
-1. Verifique se o IP está correto:
-   ```bash
-   ip addr show | grep 192.168
-   ```
-2. Teste conectividade do dispositivo:
-   ```bash
-   ping 192.168.112.180
-   ```
+#### ❌ Configurações não funcionam
+**Sintomas:** Ferramentas não encontram arquivos de configuração
 
-## 📞 Suporte
+**Soluções:**
+```bash
+# 1. Recriar symlinks
+yarn prepare-configs
 
-Para problemas ou dúvidas:
+# 2. Verificar se os symlinks existem
+ls -la | grep -E "(app\.config\.js|tsconfig\.json)"
 
-1. Verifique se o backend está rodando
-2. Confirme a URL da API em `ApiConfig.ts`
-3. Verifique logs do console
-4. Teste conectividade com `ping` ou `curl`
+# 3. Resetar configurações
+./scripts/reset-frontend.sh
+```
+
+### Logs de Debug
+
+Para obter mais informações sobre erros:
+
+```bash
+# Logs do Expo
+yarn start --verbose
+
+# Logs do Metro
+yarn start --reset-cache
+
+# Logs do TypeScript
+yarn tsc --noEmit
+```
+
+## 🤝 Contribuindo
+
+Contribuições são bem-vindas! Para contribuir:
+
+1. **Fork** o projeto
+2. **Crie** uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. **Commit** suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. **Push** para a branch (`git push origin feature/AmazingFeature`)
+5. **Abra** um Pull Request
+
+### Padrões de Código
+
+- Use TypeScript para todos os arquivos
+- Siga as regras do ESLint
+- Adicione testes para novas funcionalidades
+- Mantenha a documentação atualizada
+- Use hooks personalizados quando apropriado
+
+## 📄 Licença
+
+Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
+
+## 🎯 Roadmap
+
+- [ ] Notificações push
+- [ ] Modo offline
+- [ ] Temas escuro/claro
+- [ ] Suporte a múltiplos idiomas
+- [ ] Dashboard com gráficos
+- [ ] Backup/restore de configurações
+- [ ] Integração com wearables
 
 ---
 
-**IOTRAC Frontend** - Sistema completo de gerenciamento IoT com proteção e monitoramento em tempo real. 
+**IOTRAC Frontend** - Gerenciando IoT com estilo! 📱✨
+
+*Desenvolvido com ❤️ para a comunidade IoT* 
