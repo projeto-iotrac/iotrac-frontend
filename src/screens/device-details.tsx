@@ -1,10 +1,10 @@
-import Colors from "../src/constants/Colors";
+import Colors from "../constants/Colors";
 import { ScrollView, Text, TouchableOpacity, View, Alert, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
-import { apiService, Device, ProtectionStatus } from "../src/services/api";
-import { useDevices } from "../src/hooks/useApi";
+import { apiService, Device, ProtectionStatus } from "../services/api";
+import { useDevices } from "../hooks/useApi";
 
 export default function DeviceDetails() {
   const { id } = useLocalSearchParams();
@@ -183,4 +183,4 @@ export default function DeviceDetails() {
 
     </ScrollView>
   );
-} 
+}

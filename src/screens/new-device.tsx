@@ -1,10 +1,10 @@
-import Dropdown from "../src/components/Dropdown";
+import Dropdown from "../components/Dropdown";
 import React, { useState } from "react";
 import { Text, TouchableOpacity, View, TextInput, Alert, ScrollView, ActivityIndicator, StyleSheet } from "react-native";
-import Colors from "../src/constants/Colors";
+import Colors from "../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
-import { apiService } from "../src/services/api";
-import { DEVICE_TYPES } from "../src/constants/ApiConfig";
+import { apiService } from "../services/api";
+import { DEVICE_TYPES } from "../constants/ApiConfig";
 import { useRouter } from "expo-router";
 
 export default function NewDevice() {
@@ -196,4 +196,4 @@ const styles = StyleSheet.create({
         color: Colors.error,
         fontSize: 14,
     },
-}); 
+});

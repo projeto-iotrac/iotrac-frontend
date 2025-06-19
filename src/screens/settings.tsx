@@ -1,8 +1,8 @@
 import { Text, View, ScrollView, TouchableOpacity, RefreshControl, Alert } from "react-native";
 import { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import Colors from "../src/constants/Colors";
-import { apiService, LogEntry, ProtectionStatus } from "../src/services/api";
+import Colors from "../constants/Colors";
+import { apiService, LogEntry, ProtectionStatus } from "../services/api";
 
 export default function Settings() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -199,12 +199,39 @@ export default function Settings() {
             <Text style={{ fontSize: 12, marginBottom: 2 }}>
               Comando: {log.command}
             </Text>
-            <Text style={{ fontSize: 10, color: '#999' }}>
+            
+            <Text style={{ fontSize: 10, color: '#666', marginBottom: 2 }}>
+              IP: {log.ip_address}
+            </Text>
+            
+            <Text style={{ fontSize: 10, color: '#666' }}>
               {formatTimestamp(log.timestamp)}
             </Text>
           </View>
         ))
       )}
+
+      {/* Informações da API */}
+      <View style={{ 
+        backgroundColor: '#f5f5f5', 
+        padding: 16, 
+        borderRadius: 8, 
+        marginTop: 16,
+        marginBottom: 20
+      }}>
+        <Text style={{ fontSize: 16, fontWeight: '600', marginBottom: 8 }}>
+          Informações da API
+        </Text>
+        <Text style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
+          Status: Conectado
+        </Text>
+        <Text style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
+          Total de Logs: {logs.length}
+        </Text>
+        <Text style={{ fontSize: 12, color: '#666' }}>
+          Última atualização: {new Date().toLocaleString()}
+        </Text>
+      </View>
     </ScrollView>
   );
-} 
+}

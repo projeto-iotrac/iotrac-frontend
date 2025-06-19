@@ -1,0 +1,122 @@
+import Colors from '../constants/Colors';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native';
+
+const DevicesMenu = () => {
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+  const router = useRouter();
+
+  const toggleDropdown = () => {
+    console.log('Toggle dropdown clicked');
+    setDropdownVisible(!dropdownVisible);
+  };
+
+  const closeDropdown = () => {
+    console.log('Closing dropdown');
+    setDropdownVisible(false);
+  };
+
+  const handleAddDevice = () => {
+    console.log('Add device clicked');
+    closeDropdown();
+    try {
+      router.push("/new-device");
+    } catch (error) {
+      console.error('Navigation error:', error);
+      Alert.alert('Erro', 'Erro ao navegar para nova tela');
+    }
+  };
+
+  return (
+    <View style={styles.wrapper}>
+      <View style={styles.container}>
+        <Text style={styles.text}>Dispositivos</Text>
+
+        <View style={styles.buttonContainer}>
+          {/* Botão de menu */}
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={toggleDropdown}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="ellipsis-vertical" size={24} color={Colors.primary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {dropdownVisible && (
+        <>
+          <View style={styles.dropdown}>
+            <TouchableOpacity
+              style={styles.dropdownItem}
+              onPress={handleAddDevice}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add-circle-outline" size={20} color={Colors.primary} style={{ marginRight: 8 }} />
+              <Text style={styles.dropdownText}>
+                Adicionar novo dispositivo
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <Pressable 
+            style={[StyleSheet.absoluteFill, { zIndex: 1 }]} 
+            onPress={closeDropdown} 
+          />
+        </>
+      )}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  wrapper: {
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 2,
+    width: '100%',
+  },
+  text: {
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuButton: {
+    padding: 4,
+  },
+  dropdown: {
+    position: 'absolute',
+    top: 30,
+    right: 9,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+    zIndex: 3,
+    minWidth: 200,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  dropdownText: {
+    color: Colors.primary,
+    fontSize: 16,
+  }
+});
+
+export default DevicesMenu;

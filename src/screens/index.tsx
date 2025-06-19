@@ -1,10 +1,10 @@
-import Device from "../src/components/Device";
-import DevicesMenu from "../src/components/DevicesMenu";
+import Device from "../components/Device";
+import DevicesMenu from "../components/DevicesMenu";
 import { View, Text, Alert, TouchableOpacity, FlatList, RefreshControl } from "react-native";
 import { useEffect, useState } from "react";
-import { apiService, Device as DeviceData, ProtectionStatus } from "../src/services/api";
-import Colors from "../src/constants/Colors";
-import { useDevices } from "../src/hooks/useApi";
+import { apiService, Device as DeviceData, ProtectionStatus } from "../services/api";
+import Colors from "../constants/Colors";
+import { useDevices } from "../hooks/useApi";
 
 export default function Index() {
   const { devices, loading, error, refreshDevices, removeDevice } = useDevices();

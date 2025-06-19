@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
-import Colors from "../src/constants/Colors";
+import Colors from "../constants/Colors";
 
 const CustomTabButton = (props: any) => {
   const filteredProps = Object.fromEntries(
@@ -69,4 +69,4 @@ export default function Layout() {
       }} />
     </Tabs>
   );
-} 
+}
