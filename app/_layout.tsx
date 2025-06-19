@@ -32,18 +32,19 @@ export default function Layout() {
         },
         tabBarActiveBackgroundColor: 'transparent',
         tabBarInactiveBackgroundColor: 'transparent',
-        tabBarActiveTintColor: "#FFFFFF",
+        tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.secondary,
         tabBarPressColor: 'transparent',
         tabBarStyle: {
-          backgroundColor: '#444444',
+          backgroundColor: '#FFFFFF',
           borderTopWidth: 0
         },
         tabBarButton: (props) => <CustomTabButton {...props} />,
         headerShown: true,
 
         header: () => (
-          <View style={{ padding: 16, paddingTop: 40, backgroundColor: '#444444' }}>
+          <View style={{ padding: 16, paddingTop: 40, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.primary }}>
+            <Ionicons name="shield-half" size={20} style={{color: '#FFF'}} /> 
             <Text style={{ fontSize: 20, fontWeight: 'bold', color: "#FFFFFF" }}>IOTRAC</Text>
           </View>
         ),
