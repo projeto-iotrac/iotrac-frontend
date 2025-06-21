@@ -5,7 +5,7 @@ const Colors = {
   success: "#198754",
   error: "#dc3545",
   warning: "#bc8d02",
-  gray: "#6c757d",
+  neutral: "#ddd",
 };
 
 export default Colors;

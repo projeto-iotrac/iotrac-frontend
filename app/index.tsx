@@ -20,7 +20,7 @@ export default function Index() {
     }
   };
 
-  const onRefresh = async () => {
+    const onRefresh = async () => {
     console.log('Refresh iniciado');
     setRefreshing(true);
     await refreshDevices();
@@ -81,14 +81,12 @@ export default function Index() {
 
   const ListHeaderComponent = () => (
     <>
-      <DevicesMenu />
-      
       {error && (
-        <View style={{ 
-          backgroundColor: '#ffebee', 
-          padding: 16, 
-          borderRadius: 8, 
-          marginBottom: 16 
+        <View style={{
+          backgroundColor: '#ffebee',
+          padding: 16,
+          borderRadius: 8,
+          marginBottom: 16
         }}>
           <Text style={{ color: '#c62828', textAlign: 'center' }}>
             {error}
@@ -97,7 +95,7 @@ export default function Index() {
       )}
 
       {devices.length === 0 && !loading && !error && (
-        <View style={{ 
+        <View style={{
           padding: 40,
           alignItems: 'center'
         }}>
@@ -121,12 +119,13 @@ export default function Index() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, padding: 16, paddingTop: 0 }}>
+      {/* DevicesMenu fora do FlatList */}
+      <DevicesMenu />
       <FlatList
         data={devices}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ padding: 16 }}
         ListHeaderComponent={ListHeaderComponent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

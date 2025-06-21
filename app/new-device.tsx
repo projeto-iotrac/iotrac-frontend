@@ -104,6 +104,7 @@ export default function NewDevice() {
                     error && ipAddress === "" && styles.inputError
                 ]}
                 placeholder="Ex: 192.168.1.100"
+                placeholderTextColor={'#c0c0c0'}
                 value={ipAddress}
                 onChangeText={(text) => {
                     setIpAddress(text);
@@ -147,7 +148,6 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: '500',
         marginVertical: 16,
-        color: Colors.primary,
     },
     label: {
         marginBottom: 8,
@@ -155,14 +155,16 @@ const styles = StyleSheet.create({
     },
     dropdownContainer: {
         marginBottom: 16,
+        zIndex: 1,
+
     },
     input: {
         borderWidth: 1,
-        borderColor: '#ddd',
+        borderColor: Colors.neutral,
         borderRadius: 8,
         padding: 12,
+        backgroundColor: '#FFF',
         marginBottom: 16,
-        fontSize: 16,
     },
     inputError: {
         borderColor: Colors.error,

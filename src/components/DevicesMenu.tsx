@@ -74,12 +74,13 @@ const styles = StyleSheet.create({
   wrapper: {
     marginBottom: 8,
     marginTop: 16,
+    position: 'relative',
+    zIndex: 1,
   },
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    zIndex: 2,
     width: '100%',
   },
   text: {
@@ -101,11 +102,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 4,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-    zIndex: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    display: 'flex',
     minWidth: 200,
+    elevation: 10,
   },
   dropdownItem: {
     flexDirection: 'row',
@@ -114,7 +119,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   dropdownText: {
-    color: Colors.primary,
     fontSize: 16,
   }
 });

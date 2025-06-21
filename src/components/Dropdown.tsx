@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Colors from '../constants/Colors';
 
 type DropdownItem = { label: string; value: string };
 type DropdownProps = {
@@ -77,8 +78,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
+    borderColor: Colors.neutral,
+    borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     backgroundColor: '#fff',
@@ -95,7 +96,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderColor: '#ccc',
     borderTopWidth: 0,
-    borderRadius: 4,
+    borderRadius: 8,
     backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
