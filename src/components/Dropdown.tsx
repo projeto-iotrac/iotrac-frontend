@@ -4,14 +4,17 @@ import { Animated, FlatList, StyleSheet, Text, TouchableOpacity, View } from 're
 import Colors from '../constants/Colors';
 
 type DropdownItem = { label: string; value: string };
+import { StyleProp, ViewStyle } from 'react-native';
+
 type DropdownProps = {
   items: DropdownItem[];
   onSelect: (value: string) => void;
   placeholder: string;
   value?: string;
+  style?: StyleProp<ViewStyle>;
 };
 
-const Dropdown: React.FC<DropdownProps> = ({ items, onSelect, placeholder, value }) => {
+const Dropdown: React.FC<DropdownProps> = ({ items, onSelect, placeholder, value, style }) => {
   const [open, setOpen] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
 
@@ -25,7 +28,7 @@ const Dropdown: React.FC<DropdownProps> = ({ items, onSelect, placeholder, value
 
   const dropdownHeight = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, items.length * 40], // altura do dropdown
+    outputRange: [0, items.length * 40],
   });
 
   const rotateIcon = animation.interpolate({
@@ -36,12 +39,14 @@ const Dropdown: React.FC<DropdownProps> = ({ items, onSelect, placeholder, value
   const selectedLabel = items.find(item => item.value === value)?.label;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container]}>
       <TouchableOpacity
-        style={styles.button}
+        style={[styles.button, style]}
         onPress={() => setOpen(!open)}
         activeOpacity={0.8}>
-        <Text style={styles.buttonText}>{selectedLabel || placeholder}</Text>
+        <Text style={selectedLabel ? styles.buttonText : styles.placeholderText}>
+          {selectedLabel || placeholder}
+        </Text>        
         <Animated.View style={{ transform: [{ rotate: rotateIcon }] }}>
           <Ionicons name="chevron-down" size={20} color="#555" />
         </Animated.View>
@@ -71,7 +76,8 @@ const Dropdown: React.FC<DropdownProps> = ({ items, onSelect, placeholder, value
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    position: 'relative', 
+    position: 'relative',
+    zIndex: 1,
   },
   button: {
     flexDirection: 'row',
@@ -86,7 +92,10 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   buttonText: {
-    color: '#333',
+    color: '#000',
+  },
+  placeholderText: {
+    color: '#c0c0c0',
   },
   dropdown: {
     position: 'absolute',
@@ -99,8 +108,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#fff',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.25,
     shadowRadius: 5,
     elevation: 5,
     zIndex: 1,

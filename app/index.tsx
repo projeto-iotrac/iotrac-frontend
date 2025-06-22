@@ -1,6 +1,6 @@
 import Device from "../src/components/Device";
 import DevicesMenu from "../src/components/DevicesMenu";
-import { View, Text, Alert, TouchableOpacity, FlatList, RefreshControl } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, FlatList, RefreshControl } from "react-native";
 import { useEffect, useState } from "react";
 import { apiService, Device as DeviceData, ProtectionStatus } from "../src/services/api";
 import Colors from "../src/constants/Colors";
@@ -119,7 +119,7 @@ export default function Index() {
   }
 
   return (
-    <View style={{ flex: 1, padding: 16, paddingTop: 0 }}>
+    <ScrollView style={{ flex: 1, padding: 16, paddingTop: 0 }}>
       {/* DevicesMenu fora do FlatList */}
       <DevicesMenu />
       <FlatList
@@ -131,6 +131,6 @@ export default function Index() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
-    </View>
+    </ScrollView>
   );
 }
