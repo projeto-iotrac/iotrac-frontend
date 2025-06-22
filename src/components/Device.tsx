@@ -1,8 +1,11 @@
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native';
-import Colors from "../constants/Colors";
+import React, { useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View, Alert, Modal, ActivityIndicator } from 'react-native';
+import { apiService } from "../../src/services/api";
+import Colors from "../../src/constants/Colors";
+import { useDevices } from "../../src/hooks/useApi";
 import { Ionicons } from "@expo/vector-icons";
+import Button from './Button';
 
 interface DeviceProps {
   title: string;
@@ -28,101 +31,93 @@ const getStatusColor = (subtitle?: string) => {
 
 const Device: React.FC<DeviceProps> = ({ title, subtitle, href, deviceId, protectionEnabled, onDelete }) => {
   const router = useRouter();
+  const { refreshDevices } = useDevices();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handlePress = () => {
     router.push(href);
   };
 
-  const handleDeletePress = (e: any) => {
-    // Parar a propagação do evento imediatamente
-    e.preventDefault();
-    e.stopPropagation();
-    
-    console.log('🔴 Botão de delete pressionado para dispositivo:', deviceId);
-    
-    if (!onDelete) {
-      console.error('❌ Função onDelete não fornecida');
-      Alert.alert("Erro", "Função de remoção não disponível");
-      return;
+const handleDeleteDevice = async (deviceId: number) => {
+  try {
+    setIsDeleting(true);
+    const startTime = Date.now();
+
+    await apiService.deleteDevice(deviceId);
+    await refreshDevices();
+
+    const elapsed = Date.now() - startTime;
+    const minLoadingTime = 9000; // 1 segundo mínimo
+
+    if (elapsed < minLoadingTime) {
+      await new Promise((resolve) => setTimeout(resolve, minLoadingTime - elapsed));
     }
-    
-    Alert.alert(
-      "Confirmar Remoção",
-      "Tem certeza que deseja remover este dispositivo? Esta ação não pode ser desfeita.",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel",
-          onPress: () => console.log('❌ Remoção cancelada pelo usuário')
-        },
-        {
-          text: "Remover",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              console.log('🔄 Iniciando remoção do dispositivo:', deviceId);
-              await onDelete(deviceId);
-              console.log('✅ Dispositivo removido com sucesso:', deviceId);
-              Alert.alert("Sucesso", "Dispositivo removido com sucesso");
-            } catch (error) {
-              console.error('❌ Erro ao remover dispositivo:', error);
-              const errorMessage = error instanceof Error ? error.message : "Erro ao remover dispositivo";
-              Alert.alert("Erro", errorMessage);
-            }
-          }
-        }
-      ]
-    );
-  };
+
+    Alert.alert("Sucesso", "Dispositivo excluído com sucesso!");
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Erro ao excluir dispositivo";
+    console.error("Erro ao excluir dispositivo:", errorMessage);
+    Alert.alert("Erro", errorMessage);
+  } finally {
+    setIsDeleting(false);
+  }
+};
 
   return (
-    <TouchableOpacity 
-      style={styles.container} 
-      onPress={handlePress} 
-      activeOpacity={0.7}
-      delayPressIn={200}
-    >
-      <View style={styles.content}>
-        <View style={styles.info}>
-          <Text style={styles.title}>{title}</Text>
-          <View style={styles.statusContainer}>
-            <View style={[styles.statusDot, { backgroundColor: getStatusColor(subtitle) }]} />
-            <Text style={styles.subtitle}>{subtitle}</Text>
-          </View>
-          {protectionEnabled !== undefined && (
-            <View style={styles.protectionContainer}>
-              <Ionicons 
-                name={protectionEnabled ? "shield-checkmark" : "shield-outline"} 
-                size={16} 
-                color={protectionEnabled ? Colors.success : Colors.warning} 
-              />
-              <Text style={[styles.protectionText, { color: protectionEnabled ? Colors.success : Colors.warning }]}>
-                {protectionEnabled ? "Protegido" : "Desprotegido"}
-              </Text>
+    <>
+      <TouchableOpacity
+        style={styles.container}
+        onPress={handlePress}
+        activeOpacity={0.7}
+        delayPressIn={200}
+        disabled={isDeleting}
+      >
+        <View style={styles.content}>
+          <View style={styles.info}>
+            <Text style={styles.title}>{title}</Text>
+            <View style={styles.statusContainer}>
+              <View style={[styles.statusDot, { backgroundColor: getStatusColor(subtitle) }]} />
+              <Text style={styles.subtitle}>{subtitle}</Text>
             </View>
-          )}
+            {protectionEnabled !== undefined && (
+              <View style={styles.protectionContainer}>
+                <Ionicons
+                  name={protectionEnabled ? "shield-checkmark" : "shield-outline"}
+                  size={16}
+                  color={protectionEnabled ? Colors.success : Colors.warning}
+                />
+                <Text style={[styles.protectionText, { color: protectionEnabled ? Colors.success : Colors.warning }]}>
+                  {protectionEnabled ? "Protegido" : "Desprotegido"}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.actions}>
+            <Button
+              icon="trash"
+              btnClass="buttonDelete"
+              onPress={() => {
+                handleDeleteDevice(deviceId);
+              }}
+              disabled={isDeleting}
+            />
+          </View>
         </View>
-        
-        <View style={styles.actions}>
-          <TouchableOpacity 
-            style={styles.deleteButton} 
-            onPress={handleDeletePress}
-            onPressIn={(e) => {
-              console.log('🔴 TESTE: Botão de delete pressionado (onPressIn)');
-              e.stopPropagation();
-            }}
-            onPressOut={(e) => {
-              console.log('🔴 TESTE: Botão de delete solto (onPressOut)');
-              e.stopPropagation();
-            }}
-            activeOpacity={0.5}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="trash-outline" size={20} color={Colors.error} />
-          </TouchableOpacity>
+      </TouchableOpacity>
+
+      <Modal
+        visible={isDeleting}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {}}
+      >
+        <View style={styles.modalOverlay}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.modalText}>Excluindo dispositivo...</Text>
         </View>
-      </View>
-    </TouchableOpacity>
+      </Modal>
+    </>
   );
 };
 
@@ -184,25 +179,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  deleteButton: {
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#fff5f5',
-    borderWidth: 2,
-    borderColor: '#fed7d7',
-    minWidth: 44,
-    minHeight: 44,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+  },
+  modalText: {
+    marginTop: 12,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

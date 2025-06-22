@@ -1,11 +1,12 @@
 import Device from "../src/components/Device";
 import DevicesMenu from "../src/components/DevicesMenu";
-import { View, Text, ScrollView, TouchableOpacity, FlatList, RefreshControl } from "react-native";
+import { View, Text, ScrollView, FlatList, RefreshControl, Alert } from "react-native";
 import { useEffect, useState } from "react";
 import { apiService, Device as DeviceData, ProtectionStatus } from "../src/services/api";
 import Colors from "../src/constants/Colors";
 import { useDevices } from "../src/hooks/useApi";
 import Banner from "../src/components/Banner";
+import { router } from "expo-router";
 
 export default function Index() {
   const { devices, loading, error, refreshDevices, removeDevice } = useDevices();
@@ -22,17 +23,10 @@ export default function Index() {
   };
 
   const onRefresh = async () => {
-    console.log('Refresh iniciado');
     setRefreshing(true);
     await refreshDevices();
     await loadProtectionStatus();
     setRefreshing(false);
-  };
-
-  const handleDeleteDevice = async (deviceId: number) => {
-    console.log('🔄 Index: Iniciando remoção do dispositivo:', deviceId);
-    await removeDevice(deviceId);
-    console.log('✅ Index: Dispositivo removido com sucesso:', deviceId);
   };
 
   useEffect(() => {
@@ -76,7 +70,6 @@ export default function Index() {
       href={`/device-details?id=${item.id}`}
       deviceId={item.id}
       protectionEnabled={item.protection_enabled}
-      onDelete={handleDeleteDevice}
     />
   );
 

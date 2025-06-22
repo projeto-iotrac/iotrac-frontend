@@ -3,20 +3,35 @@ import { Ionicons } from '@expo/vector-icons';
 import Colors from '../constants/Colors';
 
 interface ButtonProps {
-    text: string;
-    btnClass?: 'buttonPrimary' | 'buttonSecondary' | 'buttonDisabled';
+    text?: string;
+    btnClass?: 'buttonPrimary' | 'buttonSecondary' | 'buttonDisabled' | 'buttonDelete';
     icon?: keyof typeof Ionicons.glyphMap;
     onPress?: () => void;
     disabled?: boolean;
 };
 
 const Button: React.FC<ButtonProps> = ({ text, icon, btnClass = "buttonPrimary", onPress, disabled }) => {
+    let iconColor = "#FFF";
+    let textColor = "#FFF";
+    
+    switch (btnClass) {
+        case "buttonDelete":
+            iconColor = Colors.error;
+            textColor = Colors.error;
+            break;
+        default:
+            break;
+    }
+
     return (
         <TouchableOpacity onPress={onPress} disabled={disabled} style={[styles.button, styles[btnClass], disabled && styles.buttonDisabled]}>
             {icon && (
-                <Ionicons name={icon} style={styles.buttonIcon}/>
+                <Ionicons name={icon} style={[styles.buttonIcon, {color: iconColor }]} />
             )}
-            <Text style={styles.buttonText}>{text}</Text>
+
+            {text && (
+                <Text style={[styles.buttonText, {color: iconColor }]}>{text}</Text>
+            )}
         </TouchableOpacity>
     );
 }
@@ -39,6 +54,14 @@ const styles = StyleSheet.create({
     },
     buttonDisabled: {
         backgroundColor: Colors.neutral,
+    },
+    buttonDelete: {
+        paddingVertical: 6,
+        paddingHorizontal: 6,
+        borderRadius: 8,
+        backgroundColor: '#fce3e3',
+        minWidth: 44,
+        minHeight: 44,
     },
     buttonText: {
         color: '#FFF',
