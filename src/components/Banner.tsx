@@ -1,4 +1,4 @@
-import Colors from '@/constants/Colors';
+import Colors from '../constants/Colors';
 import React from 'react';
 import { Image, ImageSourcePropType, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';

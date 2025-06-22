@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { apiService, Device as DeviceData, ProtectionStatus } from "../src/services/api";
 import Colors from "../src/constants/Colors";
 import { useDevices } from "../src/hooks/useApi";
+import Banner from "../src/components/Banner";
 
 export default function Index() {
   const { devices, loading, error, refreshDevices, removeDevice } = useDevices();
@@ -20,7 +21,7 @@ export default function Index() {
     }
   };
 
-    const onRefresh = async () => {
+  const onRefresh = async () => {
     console.log('Refresh iniciado');
     setRefreshing(true);
     await refreshDevices();
@@ -63,7 +64,7 @@ export default function Index() {
       'smart-tv': 'Smart TV',
       'smart-thermostat': 'Termostato Inteligente'
     };
-    
+
     return typeMap[device.device_type] || device.device_type;
   };
 
@@ -99,7 +100,7 @@ export default function Index() {
           padding: 40,
           alignItems: 'center'
         }}>
-          <Text style={{ fontSize: 16, color: '#666', textAlign: 'center' }}>
+          <Text style={{ fontSize: 16, color: Colors.textSecondary, textAlign: 'center' }}>
             Nenhum dispositivo encontrado.{'\n'}
             Adicione um dispositivo para começar.
           </Text>
@@ -119,18 +120,21 @@ export default function Index() {
   }
 
   return (
-    <ScrollView style={{ flex: 1, padding: 16, paddingTop: 0 }}>
-      {/* DevicesMenu fora do FlatList */}
-      <DevicesMenu />
-      <FlatList
-        data={devices}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-        ListHeaderComponent={ListHeaderComponent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      />
+    <ScrollView>
+      <Banner source={require('../assets/images/banner.png')} />
+
+      <View style={{ flex: 1, padding: 16, paddingTop: 0 }}>
+        <DevicesMenu />
+        <FlatList
+          data={devices}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+          ListHeaderComponent={ListHeaderComponent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        />
+      </View>
     </ScrollView>
   );
 }

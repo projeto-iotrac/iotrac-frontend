@@ -1,5 +1,5 @@
 import Colors from "../src/constants/Colors";
-import { ScrollView, Text, TouchableOpacity, View, Alert, ActivityIndicator } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View, Alert, ActivityIndicator, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
@@ -55,7 +55,7 @@ export default function DeviceDetails() {
 
   const handleToggleProtection = async () => {
     if (!device) return;
-    
+
     try {
       setSendingCommand(true);
       const response = await toggleDeviceProtection(device.id);
@@ -64,7 +64,7 @@ export default function DeviceDetails() {
         timestamp: response.timestamp
       });
       Alert.alert(
-        "Sucesso", 
+        "Sucesso",
         response.message,
         [{ text: "OK" }]
       );
@@ -86,7 +86,7 @@ export default function DeviceDetails() {
       'smart-tv': 'Smart TV',
       'smart-thermostat': 'Termostato Inteligente'
     };
-    
+
     return typeMap[deviceType] || deviceType;
   };
 
@@ -112,75 +112,80 @@ export default function DeviceDetails() {
   }
 
   return (
-    <ScrollView style={{ flex: 1, paddingHorizontal: 16 }}>
+    <ScrollView style={styles.container}>
       <Text style={{ fontSize: 20, fontWeight: '500', marginVertical: 16 }}>
         Detalhes do Dispositivo
       </Text>
 
-      <View style={{ 
-        backgroundColor: '#f5f5f5', 
-        padding: 16, 
-        borderRadius: 8, 
-        marginBottom: 16 
-      }}>
-        <Text style={{ marginBottom: 8, fontWeight: '600' }}>
-          Nome: {getDeviceTitle(device.device_type)}
-        </Text>
-        <Text style={{ marginBottom: 8 }}>
-          Tipo: {device.device_type}
-        </Text>
-        <Text style={{ marginBottom: 8 }}>
-          IP: {device.ip_address}
-        </Text>
-        <Text style={{ marginBottom: 8 }}>
-          ID: {device.id}
-        </Text>
+      <View style={styles.contentContainer}>
+        <Text><span style={styles.textBold}>Nome:</span> {getDeviceTitle(device.device_type)}</Text>
+        <Text><span style={styles.textBold}>Tipo:</span> {device.device_type}</Text>
+        <Text><span style={styles.textBold}>IP:</span> {device.ip_address}</Text>
+        <Text><span style={styles.textBold}>Código de identificação:</span> {device.id}</Text>
         {device.registered_at && (
-          <Text style={{ marginBottom: 8 }}>
-            Registrado em: {new Date(device.registered_at).toLocaleString()}
+          <Text>
+            <span style={styles.textBold}>Data de registro:</span> {new Date(device.registered_at).toLocaleString()}
           </Text>
         )}
-        <Text style={{ marginBottom: 8 }}>
-          Status: {protectionStatus?.protection_enabled ? "Protegido" : "Vulnerável"}
-        </Text>
+        <Text><span style={styles.textBold}>Status:</span> {protectionStatus?.protection_enabled ? "Protegido" : "Vulnerável"}</Text>
+
+        <View>
+          <TouchableOpacity
+            onPress={handleToggleProtection}
+            disabled={sendingCommand}
+            style={{
+              backgroundColor: protectionStatus?.protection_enabled ? Colors.error : Colors.primary,
+              paddingVertical: 12,
+              paddingHorizontal: 20,
+              width: '100%',
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              gap: 8,
+              borderRadius: 8,
+              opacity: sendingCommand ? 0.6 : 1,
+            }}>
+            <Ionicons
+              name={protectionStatus?.protection_enabled ? "alert-circle" : "shield"}
+              size={20}
+              style={{ color: '#FFF' }}
+            />
+            <Text style={{ color: '#FFF', fontWeight: 'bold' }}>
+              {sendingCommand
+                ? "Processando..."
+                : protectionStatus?.protection_enabled
+                  ? "Desativar Proteção"
+                  : "Ativar Proteção"
+              }
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={styles.label}>Obs.: Ao desativar a proteção, lembre-se de que o dispositivo ficará vulnerável a ataques. A IOTRAC não se responsabiliza por quaisquer prejuízos causados após a desativação da proteção.</Text>
+        </View>
       </View>
-
-      {/* Controle de Proteção */}
-      <Text style={{ fontSize: 16, fontWeight: '500', marginBottom: 12 }}>
-        Controle de Proteção
-      </Text>
-
-      <TouchableOpacity
-        onPress={handleToggleProtection}
-        disabled={sendingCommand}
-        style={{
-          backgroundColor: protectionStatus?.protection_enabled ? Colors.error : Colors.primary,
-          paddingVertical: 12,
-          paddingHorizontal: 20,
-          marginBottom: 32,
-          width: '100%',
-          alignItems: 'center',
-          flexDirection: 'row',
-          justifyContent: 'center',
-          gap: 8,
-          borderRadius: 8,
-          opacity: sendingCommand ? 0.6 : 1,
-        }}>
-        <Ionicons 
-          name={protectionStatus?.protection_enabled ? "alert-circle" : "shield"} 
-          size={20} 
-          style={{color: '#FFF'}} 
-        /> 
-        <Text style={{ color: '#FFF', fontWeight: 'bold' }}>
-          {sendingCommand 
-            ? "Processando..." 
-            : protectionStatus?.protection_enabled 
-              ? "Desativar Proteção" 
-              : "Ativar Proteção"
-          }
-        </Text>
-      </TouchableOpacity>
-
     </ScrollView>
   );
-} 
+}
+
+const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 16
+  },
+  contentContainer: {
+    backgroundColor: "#FFF",
+    padding: 16,
+    borderRadius: 8,
+    borderColor: Colors.neutral,
+    borderWidth: 1,
+    display: "flex",
+    gap: 16,
+  },
+  label: {
+    fontSize: 12,
+    marginTop: 8,
+    color: Colors.textSecondary
+  },
+  textBold: {
+    fontWeight: 600
+  }
+});
