@@ -26,6 +26,122 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Função para verificar e configurar chaves AES
+setup_aes_keys() {
+    print_status "🔐 Verificando configuração de chaves AES..."
+    
+    local backend_dir="../iotrac-backend"
+    local env_file="$backend_dir/config/.env"
+    local env_example="$backend_dir/config/env.example"
+    
+    # Verificar se o diretório backend existe
+    if [ ! -d "$backend_dir" ]; then
+        print_error "❌ Diretório backend não encontrado: $backend_dir"
+        return 1
+    fi
+    
+    # Verificar se arquivo .env existe
+    if [ ! -f "$env_file" ]; then
+        print_warning "⚠️  Arquivo .env não encontrado no backend"
+        
+        # Verificar se existe env.example
+        if [ -f "$env_example" ]; then
+            print_status "📋 Copiando env.example para .env..."
+            cp "$env_example" "$env_file"
+            print_success "✅ Arquivo .env criado a partir do env.example"
+        else
+            print_error "❌ Arquivo env.example não encontrado!"
+            return 1
+        fi
+    fi
+    
+    # Verificar se as chaves estão configuradas corretamente
+    local aes_key=$(grep "^AES_KEY=" "$env_file" | cut -d'=' -f2-)
+    local hmac_key=$(grep "^HMAC_KEY=" "$env_file" | cut -d'=' -f2-)
+    
+    # Verificar se as chaves são válidas (não são placeholders)
+    local aes_valid=false
+    local hmac_valid=false
+    
+    if [ -n "$aes_key" ] && [ "$aes_key" != "sua_chave_aes_de_32_bytes_aqui_substitua_esta_chave" ]; then
+        # Verificar se tem pelo menos 32 bytes
+        local aes_length=$(echo -n "$aes_key" | wc -c)
+        if [ "$aes_length" -ge 32 ]; then
+            aes_valid=true
+        fi
+    fi
+    
+    if [ -n "$hmac_key" ] && [ "$hmac_key" != "sua_chave_hmac_de_32_bytes_aqui_substitua_esta_chave" ]; then
+        # Verificar se tem pelo menos 32 bytes
+        local hmac_length=$(echo -n "$hmac_key" | wc -c)
+        if [ "$hmac_length" -ge 32 ]; then
+            hmac_valid=true
+        fi
+    fi
+    
+    # Se alguma chave não for válida, gerar novas chaves
+    if [ "$aes_valid" = false ] || [ "$hmac_valid" = false ]; then
+        print_warning "⚠️  Chaves AES/HMAC não configuradas ou inválidas"
+        print_status "🔑 Gerando novas chaves seguras..."
+        
+        # Gerar chaves usando Python
+        cd "$backend_dir"
+        
+        # Verificar se Python está disponível
+        if ! command -v python3 &> /dev/null; then
+            print_error "❌ Python3 não encontrado para gerar chaves!"
+            return 1
+        fi
+        
+        # Gerar AES_KEY
+        local new_aes_key=$(python3 -c "import os, base64; print(base64.b64encode(os.urandom(32)).decode())")
+        if [ $? -ne 0 ]; then
+            print_error "❌ Erro ao gerar AES_KEY!"
+            return 1
+        fi
+        
+        # Gerar HMAC_KEY
+        local new_hmac_key=$(python3 -c "import os, base64; print(base64.b64encode(os.urandom(32)).decode())")
+        if [ $? -ne 0 ]; then
+            print_error "❌ Erro ao gerar HMAC_KEY!"
+            return 1
+        fi
+        
+        # Fazer backup do arquivo .env
+        cp "$env_file" "${env_file}.backup" 2>/dev/null || true
+        
+        # Atualizar as chaves no arquivo .env usando uma abordagem mais segura
+        if [ "$aes_valid" = false ]; then
+            # Usar awk para substituir de forma mais segura
+            awk -v new_aes="$new_aes_key" '/^AES_KEY=/ {print "AES_KEY=" new_aes; next} {print}' "$env_file" > "${env_file}.tmp" && mv "${env_file}.tmp" "$env_file"
+            if [ $? -eq 0 ]; then
+                print_success "✅ AES_KEY gerada e configurada"
+            else
+                print_error "❌ Erro ao atualizar AES_KEY!"
+                return 1
+            fi
+        fi
+        
+        if [ "$hmac_valid" = false ]; then
+            # Usar awk para substituir de forma mais segura
+            awk -v new_hmac="$new_hmac_key" '/^HMAC_KEY=/ {print "HMAC_KEY=" new_hmac; next} {print}' "$env_file" > "${env_file}.tmp" && mv "${env_file}.tmp" "$env_file"
+            if [ $? -eq 0 ]; then
+                print_success "✅ HMAC_KEY gerada e configurada"
+            else
+                print_error "❌ Erro ao atualizar HMAC_KEY!"
+                return 1
+            fi
+        fi
+        
+        cd - > /dev/null
+        print_success "🔐 Chaves de segurança configuradas com sucesso!"
+    else
+        print_success "✅ Chaves AES/HMAC já estão configuradas corretamente"
+    fi
+    
+    return 0
+}
+
 # Função para verificar e instalar dependências do sistema
 check_system_dependencies() {
     print_status "🔍 Verificando dependências do sistema..."
@@ -107,6 +223,34 @@ start_backend() {
     print_status "🔧 Iniciando backend..."
     cd ../iotrac-backend
     
+    # Verificação final das chaves AES antes de iniciar
+    print_status "🔐 Verificação final das chaves AES..."
+    local env_file="config/.env"
+    
+    if [ ! -f "$env_file" ]; then
+        print_error "❌ Arquivo .env não encontrado no backend!"
+        print_status "Execute o script novamente para configurar as chaves automaticamente"
+        exit 1
+    fi
+    
+    # Verificar se as chaves estão configuradas
+    local aes_key=$(grep "^AES_KEY=" "$env_file" | cut -d'=' -f2-)
+    local hmac_key=$(grep "^HMAC_KEY=" "$env_file" | cut -d'=' -f2-)
+    
+    if [ -z "$aes_key" ] || [ "$aes_key" = "sua_chave_aes_de_32_bytes_aqui_substitua_esta_chave" ] || [ $(echo -n "$aes_key" | wc -c) -lt 32 ]; then
+        print_error "❌ AES_KEY não configurada corretamente!"
+        print_status "Execute o script novamente para configurar as chaves automaticamente"
+        exit 1
+    fi
+    
+    if [ -z "$hmac_key" ] || [ "$hmac_key" = "sua_chave_hmac_de_32_bytes_aqui_substitua_esta_chave" ] || [ $(echo -n "$hmac_key" | wc -c) -lt 32 ]; then
+        print_error "❌ HMAC_KEY não configurada corretamente!"
+        print_status "Execute o script novamente para configurar as chaves automaticamente"
+        exit 1
+    fi
+    
+    print_success "✅ Chaves AES verificadas e válidas!"
+    
     # Criar e ativar ambiente virtual
     if [ ! -d "venv" ]; then
         print_status "📦 Criando ambiente virtual Python..."
@@ -140,7 +284,7 @@ start_backend() {
     
     # Tentar verificar se o backend está rodando (usar múltiplos endpoints)
     local backend_ok=false
-    local max_attempts=3
+    local max_attempts=5
     local attempt=1
     
     while [ $attempt -le $max_attempts ] && [ "$backend_ok" = false ]; do
@@ -167,8 +311,20 @@ start_backend() {
     
     if [ "$backend_ok" = false ]; then
         print_error "❌ Falha ao conectar com o backend após $max_attempts tentativas!"
-        print_status "Verificando logs do backend..."
-        print_status "Tente executar manualmente: cd ../iotrac-backend && source venv/bin/activate && uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"
+        print_status "🔍 Verificando logs do backend..."
+        
+        # Tentar capturar logs do backend
+        cd ../iotrac-backend
+        if [ -f "iotrac.log" ]; then
+            print_status "📋 Últimas linhas do log do backend:"
+            tail -10 iotrac.log 2>/dev/null || true
+        fi
+        
+        print_status "🔧 Para debug manual, execute:"
+        print_status "   cd ../iotrac-backend"
+        print_status "   source venv/bin/activate"
+        print_status "   python -c \"import os; from dotenv import load_dotenv; load_dotenv(); print('AES_KEY:', 'OK' if os.getenv('AES_KEY') and len(os.getenv('AES_KEY').encode()) >= 32 else 'ERRO')\""
+        print_status "   uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"
         exit 1
     fi
     
@@ -338,12 +494,13 @@ start_frontend() {
 configure_network_ip() {
     print_status "🌐 Configurando IP da rede automaticamente..."
     
-    # Detectar IP da interface principal
-    local ip_address=$(hostname -I | awk '{print $1}' | head -1)
+    # Detectar IP da interface principal (excluir localhost e IPv6)
+    local ip_address=$(hostname -I | awk '{for(i=1;i<=NF;i++) if($i ~ /^192\.168\.|^10\.|^172\./) print $i}' | head -1)
     
     if [ -z "$ip_address" ]; then
-        print_warning "⚠️  Não foi possível detectar IP automaticamente"
-        return 1
+        # Fallback para localhost se não encontrar IP da rede
+        ip_address="localhost"
+        print_warning "⚠️  Não foi possível detectar IP da rede, usando localhost"
     fi
     
     print_status "📍 IP detectado: $ip_address"
@@ -354,8 +511,8 @@ configure_network_ip() {
         # Fazer backup
         cp "$config_file" "${config_file}.backup" 2>/dev/null || true
         
-        # Atualizar IP na configuração
-        sed -i "s/BASE_URL: 'http:\/\/[0-9.]*:8000'/BASE_URL: 'http:\/\/$ip_address:8000'/g" "$config_file"
+        # Atualizar IP na configuração usando sed mais robusto
+        sed -i "s|BASE_URL: 'http://[^']*'|BASE_URL: 'http://$ip_address:8000'|g" "$config_file"
         
         if [ $? -eq 0 ]; then
             print_success "✅ Configuração de IP atualizada para: $ip_address"
@@ -388,6 +545,9 @@ main() {
     
     # Configurar IP automaticamente
     configure_network_ip
+    
+    # Verificar e configurar chaves AES
+    setup_aes_keys
     
     # Limpar processos anteriores
     kill_processes

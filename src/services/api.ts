@@ -36,7 +36,15 @@ api.interceptors.response.use(
     }
     
     if (error.code === 'ECONNABORTED') {
-      return Promise.reject(new Error('Tempo limite de conexão excedido'));
+      return Promise.reject(new Error('Tempo limite de conexão excedido. Verifique se o backend está rodando.'));
+    }
+    
+    if (error.code === 'ECONNREFUSED') {
+      return Promise.reject(new Error('Conexão recusada. Verifique se o backend está rodando na porta 8000.'));
+    }
+    
+    if (error.code === 'ENOTFOUND') {
+      return Promise.reject(new Error('Servidor não encontrado. Verifique a URL da API.'));
     }
     
     return Promise.reject(new Error('Erro de conexão com o servidor'));
