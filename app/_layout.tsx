@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Image, TouchableOpacity, View } from "react-native";
 import Colors from "../src/constants/Colors";
 
 const CustomTabButton = (props: any) => {
@@ -43,9 +43,8 @@ export default function Layout() {
         headerShown: true,
 
         header: () => (
-          <View style={{ padding: 16, paddingTop: 40, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.primary }}>
-            <Ionicons name="shield-half" size={20} style={{color: '#FFF'}} /> 
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: "#FFFFFF" }}>IOTRAC</Text>
+          <View style={{ padding: 16, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.primary }}>
+            <Image source={require("../assets/images/logo.png")} style={{width: 70, height: 70}}/>
           </View>
         ),
       })}
