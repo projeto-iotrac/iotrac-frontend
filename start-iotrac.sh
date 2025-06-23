@@ -138,20 +138,161 @@ start_backend() {
     print_status "⏳ Aguardando backend inicializar..."
     sleep 5
     
-    # Tentar verificar se o backend está rodando (usar endpoint raiz /)
-    if curl -s http://localhost:8000/ > /dev/null 2>&1; then
-        print_success "✅ Backend iniciado com sucesso!"
-    else
-        print_warning "⚠️  Backend pode estar iniciando ainda..."
-        print_status "Verificando novamente em 5 segundos..."
-        sleep 5
+    # Tentar verificar se o backend está rodando (usar múltiplos endpoints)
+    local backend_ok=false
+    local max_attempts=3
+    local attempt=1
+    
+    while [ $attempt -le $max_attempts ] && [ "$backend_ok" = false ]; do
+        print_status "🔍 Tentativa $attempt/$max_attempts - Verificando backend..."
+        
+        # Testar endpoint raiz
         if curl -s http://localhost:8000/ > /dev/null 2>&1; then
-            print_success "✅ Backend iniciado com sucesso!"
+            print_success "✅ Backend respondendo no endpoint raiz!"
+            backend_ok=true
+        # Testar endpoint de dispositivos
+        elif curl -s http://localhost:8000/devices > /dev/null 2>&1; then
+            print_success "✅ Backend respondendo no endpoint de dispositivos!"
+            backend_ok=true
+        # Testar endpoint de status
+        elif curl -s http://localhost:8000/status > /dev/null 2>&1; then
+            print_success "✅ Backend respondendo no endpoint de status!"
+            backend_ok=true
         else
-            print_error "❌ Falha ao iniciar o backend!"
-            exit 1
+            print_warning "⚠️  Tentativa $attempt falhou. Aguardando 3 segundos..."
+            sleep 3
+            attempt=$((attempt + 1))
+        fi
+    done
+    
+    if [ "$backend_ok" = false ]; then
+        print_error "❌ Falha ao conectar com o backend após $max_attempts tentativas!"
+        print_status "Verificando logs do backend..."
+        print_status "Tente executar manualmente: cd ../iotrac-backend && source venv/bin/activate && uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"
+        exit 1
+    fi
+    
+    print_success "✅ Backend iniciado e funcionando corretamente!"
+}
+
+# Função para limpeza inteligente do yarn
+clean_yarn_dependencies() {
+    print_status "🧹 Iniciando limpeza inteligente do yarn..."
+    
+    # Verificar se yarn está funcionando
+    if ! yarn --version > /dev/null 2>&1; then
+        print_warning "⚠️  Yarn não está funcionando corretamente. Reinstalando..."
+        npm uninstall -g yarn 2>/dev/null || true
+        npm install -g yarn
+        if [ $? -ne 0 ]; then
+            print_error "❌ Falha ao reinstalar yarn!"
+            return 1
+        fi
+        print_success "✅ Yarn reinstalado com sucesso!"
+    fi
+    
+    # Limpar cache do yarn
+    print_status "🗑️  Limpando cache do yarn..."
+    yarn cache clean 2>/dev/null || true
+    
+    # Verificar se node_modules está corrompido
+    if [ -d "node_modules" ]; then
+        print_status "🔍 Verificando integridade do node_modules..."
+        
+        # Tentar yarn install --check-files primeiro
+        if yarn install --check-files --silent 2>/dev/null; then
+            print_success "✅ node_modules está íntegro!"
+            return 0
+        else
+            print_warning "⚠️  Problemas detectados no node_modules. Iniciando limpeza..."
         fi
     fi
+    
+    # Limpeza agressiva se necessário
+    print_status "🧽 Limpeza agressiva em andamento..."
+    
+    # Remover arquivos problemáticos
+    rm -rf node_modules 2>/dev/null || true
+    rm -f yarn.lock 2>/dev/null || true
+    rm -f package-lock.json 2>/dev/null || true
+    rm -rf .yarn 2>/dev/null || true
+    rm -rf .yarnrc 2>/dev/null || true
+    
+    # Limpar cache do npm também
+    npm cache clean --force 2>/dev/null || true
+    
+    # Aguardar um pouco
+    sleep 2
+    
+    # Tentar instalação limpa
+    print_status "📦 Instalando dependências com instalação limpa..."
+    print_status "⏳ Isso pode levar alguns minutos..."
+    
+    # Usar timeout para evitar travamento
+    timeout 600 yarn install --verbose
+    
+    if [ $? -eq 124 ]; then
+        print_error "❌ Timeout na instalação limpa (10 minutos)!"
+        return 1
+    elif [ $? -ne 0 ]; then
+        print_warning "⚠️  Primeira tentativa falhou. Tentando com npm..."
+        
+        # Fallback para npm
+        timeout 600 npm install
+        
+        if [ $? -eq 124 ]; then
+            print_error "❌ Timeout na instalação com npm!"
+            return 1
+        elif [ $? -ne 0 ]; then
+            print_error "❌ Falha na instalação com npm também!"
+            return 1
+        else
+            print_success "✅ Dependências instaladas com npm!"
+            return 0
+        fi
+    else
+        print_success "✅ Limpeza e instalação concluídas com sucesso!"
+        return 0
+    fi
+}
+
+# Função para verificar e resolver problemas do yarn
+check_and_fix_yarn() {
+    print_status "🔍 Verificando saúde do yarn..."
+    
+    # Verificar se yarn está instalado
+    if ! command -v yarn &> /dev/null; then
+        print_warning "⚠️  Yarn não encontrado. Instalando..."
+        npm install -g yarn
+        if [ $? -ne 0 ]; then
+            print_error "❌ Erro ao instalar Yarn!"
+            return 1
+        fi
+        print_success "✅ Yarn instalado com sucesso!"
+    fi
+    
+    # Verificar se package.json existe
+    if [ ! -f "package.json" ]; then
+        print_error "❌ package.json não encontrado!"
+        return 1
+    fi
+    
+    # Tentar instalação normal primeiro
+    print_status "📦 Tentando instalação normal..."
+    timeout 300 yarn install --silent
+    
+    if [ $? -eq 0 ]; then
+        print_success "✅ Instalação normal bem-sucedida!"
+        return 0
+    elif [ $? -eq 124 ]; then
+        print_warning "⚠️  Timeout na instalação normal. Iniciando limpeza..."
+    else
+        print_warning "⚠️  Problemas na instalação normal. Iniciando limpeza..."
+    fi
+    
+    # Se chegou aqui, precisa de limpeza
+    clean_yarn_dependencies
+    return $?
 }
 
 # Função para iniciar frontend
@@ -159,51 +300,11 @@ start_frontend() {
     print_status "🌐 Iniciando Frontend..."
     # Já estamos no diretório frontend
     
-    # Instalar yarn se necessário
-    if ! command -v yarn &> /dev/null; then
-        print_warning "⚠️  Yarn não encontrado. Instalando..."
-        npm install -g yarn
-        if [ $? -ne 0 ]; then
-            print_error "❌ Erro ao instalar Yarn!"
-            exit 1
-        fi
-        print_success "✅ Yarn instalado com sucesso!"
-    fi
-    
-    # Verificar se node_modules existe
-    if [ ! -d "node_modules" ]; then
-        print_status "📦 Instalando dependências do frontend..."
-        print_status "⏳ Isso pode levar alguns minutos na primeira vez..."
-        
-        # Usar timeout para evitar travamento
-        timeout 600 yarn install
-        
-        if [ $? -eq 124 ]; then
-            print_error "❌ Timeout na instalação das dependências (10 minutos)!"
-            print_status "Tente executar manualmente: cd iotrac-frontend && yarn install"
-            exit 1
-        elif [ $? -ne 0 ]; then
-            print_error "❌ Erro ao instalar dependências do frontend!"
-            print_status "Tente executar manualmente: cd iotrac-frontend && yarn install"
-            exit 1
-        fi
-        
-        print_success "✅ Dependências instaladas com sucesso!"
-    else
-        print_status "📦 Verificando dependências do frontend..."
-        yarn install --check-files
-        if [ $? -ne 0 ]; then
-            print_warning "⚠️  Problemas com dependências. Reinstalando..."
-            rm -rf node_modules yarn.lock
-            timeout 600 yarn install
-            if [ $? -eq 124 ]; then
-                print_error "❌ Timeout na reinstalação das dependências!"
-                exit 1
-            elif [ $? -ne 0 ]; then
-                print_error "❌ Erro ao reinstalar dependências!"
-                exit 1
-            fi
-        fi
+    # Verificar e resolver problemas do yarn
+    if ! check_and_fix_yarn; then
+        print_error "❌ Falha ao resolver problemas do yarn!"
+        print_status "Tente executar manualmente: cd iotrac-frontend && yarn install"
+        exit 1
     fi
     
     # Iniciar Expo (mostrar output para ver QR code)
@@ -233,6 +334,44 @@ start_frontend() {
     fi
 }
 
+# Função para detectar e configurar IP automaticamente
+configure_network_ip() {
+    print_status "🌐 Configurando IP da rede automaticamente..."
+    
+    # Detectar IP da interface principal
+    local ip_address=$(hostname -I | awk '{print $1}' | head -1)
+    
+    if [ -z "$ip_address" ]; then
+        print_warning "⚠️  Não foi possível detectar IP automaticamente"
+        return 1
+    fi
+    
+    print_status "📍 IP detectado: $ip_address"
+    
+    # Atualizar arquivo de configuração do frontend
+    local config_file="src/constants/ApiConfig.ts"
+    if [ -f "$config_file" ]; then
+        # Fazer backup
+        cp "$config_file" "${config_file}.backup" 2>/dev/null || true
+        
+        # Atualizar IP na configuração
+        sed -i "s/BASE_URL: 'http:\/\/[0-9.]*:8000'/BASE_URL: 'http:\/\/$ip_address:8000'/g" "$config_file"
+        
+        if [ $? -eq 0 ]; then
+            print_success "✅ Configuração de IP atualizada para: $ip_address"
+            return 0
+        else
+            print_warning "⚠️  Não foi possível atualizar configuração automaticamente"
+            # Restaurar backup
+            mv "${config_file}.backup" "$config_file" 2>/dev/null || true
+            return 1
+        fi
+    else
+        print_warning "⚠️  Arquivo de configuração não encontrado: $config_file"
+        return 1
+    fi
+}
+
 # Função principal
 main() {
     print_status "🚀 Iniciando IOTRAC - Sistema de Gerenciamento IoT"
@@ -246,6 +385,9 @@ main() {
     
     # Verificar dependências do sistema
     check_system_dependencies
+    
+    # Configurar IP automaticamente
+    configure_network_ip
     
     # Limpar processos anteriores
     kill_processes

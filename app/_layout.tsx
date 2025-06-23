@@ -43,8 +43,24 @@ export default function Layout() {
         headerShown: true,
 
         header: () => (
-          <View style={{ padding: 16, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.primary }}>
-            <Image source={require("../assets/images/logo.png")} style={{width: 70, height: 70}}/>
+          <View style={{ 
+            padding: 16, 
+            display: 'flex', 
+            flexDirection: 'row', 
+            alignItems: 'center', 
+            gap: 8, 
+            backgroundColor: Colors.primary,
+            height: 80,
+            overflow: 'hidden'
+          }}>
+            <Image 
+              source={require("../assets/images/logo-2.png")} 
+              style={{
+                width: 200, 
+                height: 200,
+                resizeMode: 'contain'
+              }}
+            />
           </View>
         ),
       })}

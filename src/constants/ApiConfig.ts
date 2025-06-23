@@ -1,7 +1,7 @@
 // Configuración de la API del backend
 export const API_CONFIG = {
   // URL base del backend - usando IP da rede para acesso móvel
-  BASE_URL: 'http://192.168.112.180:8000',
+  BASE_URL: 'http://192.168.94.180:8000',
   
   // Endpoints disponibles
   ENDPOINTS: {
