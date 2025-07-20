@@ -9,22 +9,18 @@ const DevicesMenu = () => {
   const router = useRouter();
 
   const toggleDropdown = () => {
-    console.log('Toggle dropdown clicked');
     setDropdownVisible(!dropdownVisible);
   };
 
   const closeDropdown = () => {
-    console.log('Closing dropdown');
     setDropdownVisible(false);
   };
 
   const handleAddDevice = () => {
-    console.log('Add device clicked');
     closeDropdown();
     try {
       router.push("/new-device");
     } catch (error) {
-      console.error('Navigation error:', error);
       Alert.alert('Erro', 'Erro ao navegar para nova tela');
     }
   };

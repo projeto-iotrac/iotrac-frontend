@@ -1,17 +1,16 @@
 import Dropdown from "../src/components/Dropdown";
 import React, { useState } from "react";
-import { Text, TouchableOpacity, View, TextInput, Alert, ScrollView, ActivityIndicator, StyleSheet } from "react-native";
+import { Text, View, TextInput, ScrollView, ActivityIndicator, StyleSheet } from "react-native";
 import Colors from "../src/constants/Colors";
-import { Ionicons } from "@expo/vector-icons";
 import { apiService } from "../src/services/api";
 import { DEVICE_TYPES } from "../src/constants/ApiConfig";
 import { useRouter } from "expo-router";
 import Button from "../src/components/Button";
+import Toast from 'react-native-toast-message';
 
 export default function NewDevice() {
     const [selectedDeviceType, setSelectedDeviceType] = useState("");
     const [ipAddress, setIpAddress] = useState("");
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
 
@@ -23,44 +22,36 @@ export default function NewDevice() {
     const handleRegisterDevice = async () => {
         setError(null);
 
-        if (!selectedDeviceType) {
-            setError("Por favor, selecione um tipo de dispositivo");
-            return;
-        }
-
-        if (!ipAddress) {
-            setError("Por favor, insira o endereço IP");
-            return;
-        }
-
-        if (!validateIpAddress(ipAddress)) {
-            setError("Por favor, insira um endereço IP válido");
-            return;
-        }
-
-        setLoading(true);
-
         try {
+            if (!selectedDeviceType) {
+                setError("Por favor, selecione um tipo de dispositivo.");
+                return;
+            }
+
+            if (!ipAddress) {
+                setError("Por favor, insira o endereço IP.");
+                return;
+            }
+
+            if (!validateIpAddress(ipAddress)) {
+                setError("Por favor, insira um endereço IP válido.");
+                return;
+            }
+
             await apiService.registerDevice({
                 device_type: selectedDeviceType,
                 ip_address: ipAddress
             });
 
-            Alert.alert(
-                "Sucesso",
-                "Dispositivo registrado com sucesso!",
-                [
-                    {
-                        text: "OK",
-                        onPress: () => router.back()
-                    }
-                ]
-            );
+            router.replace("/");
+
+            Toast.show({
+                type: 'success',
+                text1: 'Dispositivo vinculado com sucesso!',
+            });
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Erro ao registrar dispositivo";
             setError(errorMessage);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -77,7 +68,7 @@ export default function NewDevice() {
                     </View>
                 )}
 
-                <View style={{zIndex: 1}}>
+                <View style={{ zIndex: 1 }}>
                     <Text style={styles.label}>
                         Escolha o tipo de dispositivo que deseja vincular:
                     </Text>
@@ -125,7 +116,7 @@ export default function NewDevice() {
                     <Button text="Parear Dispositivo" icon="bluetooth" btnClass="buttonDisabled" disabled={true} />
                 </View>
 
-                <Button text="Vincular Dispositivo" icon="add-circle" btnClass="buttonPrimary" onPress={handleRegisterDevice} disabled={loading} />
+                <Button text="Vincular Dispositivo" icon="add-circle" btnClass="buttonPrimary" onPress={handleRegisterDevice} />
             </View>
         </ScrollView>
     );
@@ -140,9 +131,9 @@ const styles = StyleSheet.create({
         backgroundColor: "#FFF",
         padding: 16,
         borderRadius: 8,
-        borderColor: Colors.neutral, 
-        borderWidth: 1, 
-        display: "flex", 
+        borderColor: Colors.neutral,
+        borderWidth: 1,
+        display: "flex",
         gap: 24
     },
     title: {
@@ -183,5 +174,5 @@ const styles = StyleSheet.create({
         fontWeight: 600,
         marginBottom: 8,
         paddingHorizontal: 8
-    }
+    },
 }); 

@@ -1,12 +1,12 @@
 import Device from "../src/components/Device";
 import DevicesMenu from "../src/components/DevicesMenu";
-import { View, Text, ScrollView, FlatList, RefreshControl, Alert } from "react-native";
+import { View, Text, ScrollView, FlatList, RefreshControl } from "react-native";
 import { useEffect, useState } from "react";
 import { apiService, Device as DeviceData, ProtectionStatus } from "../src/services/api";
 import Colors from "../src/constants/Colors";
 import { useDevices } from "../src/hooks/useApi";
 import Banner from "../src/components/Banner";
-import { router } from "expo-router";
+import Toast from 'react-native-toast-message';
 
 export default function Index() {
   const { devices, loading, error, refreshDevices, removeDevice } = useDevices();
@@ -30,7 +30,6 @@ export default function Index() {
   };
 
   useEffect(() => {
-    console.log('Componente Index montado');
     loadProtectionStatus();
 
     // Atualizar status a cada 5 segundos
@@ -114,6 +113,9 @@ export default function Index() {
 
   return (
     <ScrollView>
+      <View style={{ zIndex: 999 }}>
+        <Toast />
+      </View>
       <Banner source={require('../assets/images/banner.png')} />
 
       <View style={{ flex: 1, padding: 16, paddingTop: 0 }}>
