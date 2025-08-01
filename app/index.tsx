@@ -9,16 +9,36 @@ import Banner from "../src/components/Banner";
 import Toast from 'react-native-toast-message';
 
 export default function Index() {
-  const { devices, loading, error, refreshDevices, removeDevice } = useDevices();
+  const { devices, error, refreshDevices, removeDevice } = useDevices();
   const [refreshing, setRefreshing] = useState(false);
   const [protectionStatus, setProtectionStatus] = useState<ProtectionStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [autoRefreshing, setAutoRefreshing] = useState(false);
 
-  const loadProtectionStatus = async () => {
+  const loadProtectionStatus = async (isAutoRefresh = false) => {
     try {
+      if (isAutoRefresh) {
+        setAutoRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       const status = await apiService.getProtectionStatus();
-      setProtectionStatus(status);
+
+      setProtectionStatus(prev => {
+        if (JSON.stringify(prev) !== JSON.stringify(status)) {
+          return status;
+        }
+        return prev;
+      });
+
     } catch (err) {
       console.error('Erro ao carregar status de proteção:', err);
+    } finally {
+      if (isAutoRefresh) {
+        setAutoRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -34,7 +54,7 @@ export default function Index() {
 
     // Atualizar status a cada 5 segundos
     const interval = setInterval(() => {
-      loadProtectionStatus();
+      loadProtectionStatus(true); // auto refresh, não mostra loading global
     }, 5000);
 
     // Limpar intervalo quando o componente for desmontado
