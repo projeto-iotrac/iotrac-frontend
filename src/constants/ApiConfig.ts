@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 
 // Configuración de la API del backend
 export const API_CONFIG = {
-  BASE_URL: Constants.expoConfig?.extra?.API_URL,
+  BASE_URL: 'http://localhost:8000',
   
   // Endpoints disponibles
   ENDPOINTS: {

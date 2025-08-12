@@ -24,6 +24,7 @@ api.interceptors.response.use(
             return Promise.reject(new Error(detail));
           }
           return Promise.reject(new Error('Dados inválidos'));
+
         case 404:
           return Promise.reject(new Error('Dispositivo não encontrado'));
         case 409:

@@ -26,6 +26,341 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# ===== SISTEMA DE VALIDAÇÃO SEGURA DE CREDENCIAIS =====
+
+# Função para validar email via SMTP real
+validate_email_smtp() {
+    local email=$1
+    local password=$2
+    
+    print_status "Testando SMTP..."
+    
+    # ENVIAR EMAIL REAL para validação (não apenas testar login)
+    python3 -c "
+import smtplib
+import ssl
+import sys
+import socket
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime
+
+try:
+    # Configurações SMTP do Gmail
+    smtp_server = 'smtp.gmail.com'
+    smtp_port = 587
+    
+    # Criar contexto SSL
+    context = ssl.create_default_context()
+    
+    # Conectar, autenticar E ENVIAR EMAIL REAL
+    with smtplib.SMTP(smtp_server, smtp_port, timeout=10) as server:
+        server.starttls(context=context)
+        server.login('$email', '$password')
+        
+        # Criar email de teste REAL
+        msg = MIMEMultipart()
+        msg['From'] = '$email'
+        msg['To'] = '$email'
+        msg['Subject'] = '🔒 IOTRAC - Validação de Email REAL'
+        
+        # Corpo do email
+        body = f'''
+🎉 SUCESSO! Email validado em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}
+
+✅ Suas credenciais IOTRAC estão corretas!
+✅ Sistema pode enviar emails de 2FA
+✅ Configuração SMTP funcionando
+
+Este email confirma que:
+- Email: $email
+- SMTP: Gmail configurado corretamente
+- Status: Pronto para uso
+
+IOTRAC Security System
+        '''
+        
+        msg.attach(MIMEText(body, 'plain'))
+        
+        # ENVIAR EMAIL REAL
+        server.send_message(msg)
+    
+    print('SUCCESS')
+    sys.exit(0)
+    
+except smtplib.SMTPAuthenticationError:
+    print('INVALID_CREDENTIALS')
+    sys.exit(1)
+except (smtplib.SMTPConnectError, socket.timeout, socket.error):
+    print('CONNECTION_TIMEOUT')
+    sys.exit(2)
+except Exception as e:
+    print(f'ERROR: {str(e)}')
+    sys.exit(3)
+" 2>/dev/null
+}
+
+# Função para validar LLM API key com Together AI
+validate_llm_api_key() {
+    local api_key=$1
+    
+    print_status "Testando LLM..."
+    
+    # Usar Python para teste LLM real com ENDPOINT CORRETO
+    python3 -c "
+import requests
+import json
+import sys
+
+try:
+    # ENDPOINT CORRETO para Together AI
+    url = 'https://api.together.xyz/v1/chat/completions'
+    headers = {
+        'Authorization': 'Bearer $api_key',
+        'Content-Type': 'application/json'
+    }
+    payload = {
+        'model': 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free',
+        'messages': [
+            {'role': 'user', 'content': 'Hello, respond with just OK'}
+        ],
+        'max_tokens': 10,
+        'temperature': 0.1
+    }
+    
+    response = requests.post(url, headers=headers, json=payload, timeout=60)
+    
+    if response.status_code == 200:
+        result = response.json()
+        if 'choices' in result and len(result['choices']) > 0:
+            print('SUCCESS')
+            sys.exit(0)
+        else:
+            print('INVALID_RESPONSE')
+            sys.exit(3)
+    elif response.status_code == 401:
+        print('INVALID_API_KEY')
+        sys.exit(1)
+    elif response.status_code in [503, 502, 504]:
+        print('SERVICE_UNAVAILABLE')
+        sys.exit(2)
+    elif response.status_code == 429:
+        print('RATE_LIMITED')
+        sys.exit(7)
+    else:
+        print(f'HTTP_ERROR: {response.status_code}')
+        sys.exit(3)
+        
+except requests.exceptions.Timeout:
+    print('TIMEOUT')
+    sys.exit(4)
+except requests.exceptions.ConnectionError:
+    print('CONNECTION_ERROR')
+    sys.exit(5)
+except Exception as e:
+    print(f'ERROR: {str(e)}')
+    sys.exit(6)
+" 2>/dev/null
+}
+
+# Função principal de validação de credenciais
+secure_credential_validation() {
+    echo
+    echo "╔══════════════════════════════════════╗"
+    echo "║            IOTRAC v2.0               ║"
+    echo "║        Sistema Iniciando...          ║"
+    echo "╚══════════════════════════════════════╝"
+    echo
+    echo "🔐 VALIDAÇÃO SEGURA - IOTRAC"
+    echo "Use senha de app do Gmail (não senha normal)"
+    echo
+    
+    # ETAPA 1: Validação de Email (3 tentativas)
+    local email_attempts=0
+    local email_valid=false
+    local user_email=""
+    local user_password=""
+    
+    while [ $email_attempts -lt 3 ] && [ "$email_valid" = false ]; do
+        email_attempts=$((email_attempts + 1))
+        
+        echo "[IOTRAC] Validando credenciais de email..."
+        read -p "Email IOTRAC: " user_email
+        if [ "$user_email" != "projetoiotrac@gmail.com" ]; then
+          echo "[ERRO] Este email não está autorizado a iniciar o sistema."
+          exit 1
+        fi
+        read -s -p "Senha de app Gmail: " user_password
+        echo
+        
+        if [ -z "$user_email" ] || [ -z "$user_password" ]; then
+            print_error "❌ Email e senha são obrigatórios"
+            continue
+        fi
+        
+        # Validação SMTP real
+        validate_email_smtp "$user_email" "$user_password"
+        local smtp_exit_code=$?
+        
+        case $smtp_exit_code in
+            0)
+                print_success "✅ Email validado - Verifique sua caixa de entrada!"
+                print_status "📧 Email de confirmação enviado para: $user_email"
+                email_valid=true
+                ;;
+            1)
+                print_error "❌ Credenciais inválidas"
+                if [ $email_attempts -eq 3 ]; then
+                    print_error "❌ Máximo de tentativas excedido"
+                    print_error "❌ Terminando sistema por segurança"
+                    exit 1
+                fi
+                echo "Tentativa $email_attempts/3"
+                ;;
+            2)
+                print_error "❌ Timeout de conexão SMTP"
+                if [ $email_attempts -eq 3 ]; then
+                    print_error "❌ Problemas de conectividade persistentes"
+                    exit 1
+                fi
+                ;;
+            *)
+                print_error "❌ Erro de conexão"
+                if [ $email_attempts -eq 3 ]; then
+                    print_error "❌ Falha na validação de email"
+                    exit 1
+                fi
+                ;;
+        esac
+    done
+    
+    if [ "$email_valid" = false ]; then
+        print_error "❌ Falha na validação de email após 3 tentativas"
+        print_error "❌ Acesso negado - Terminando sistema"
+        exit 1
+    fi
+    
+    # ETAPA 2: Validação de LLM API Key (3 tentativas, opcional)
+    local llm_attempts=0
+    local llm_valid=false
+    local llm_api_key=""
+    local llm_enabled=false
+    local temp_key_file="/tmp/.iotrac_llm_temp_key"
+    
+    # VERIFICAR SE JÁ EXISTE CHAVE TEMPORÁRIA (de erro de conexão anterior)
+    if [ -f "$temp_key_file" ]; then
+        llm_api_key=$(cat "$temp_key_file" 2>/dev/null)
+        if [ -n "$llm_api_key" ]; then
+            print_status "🔑 Usando API KEY anterior (conexão anterior falhou)"
+        fi
+    fi
+    
+    # SE NÃO TEM CHAVE, PEDIR (OBRIGATÓRIO)
+    if [ -z "$llm_api_key" ]; then
+        echo "[IOTRAC] API KEY LLM (OBRIGATÓRIO):"
+        read -p "Digite a API KEY: " llm_api_key
+        
+        if [ -z "$llm_api_key" ]; then
+            print_error "❌ API KEY LLM é obrigatória para o sistema funcionar!"
+            print_status "Sistema será encerrado."
+            exit 1
+        fi
+    fi
+    
+    # VALIDAÇÃO LLM COM LÓGICA INTELIGENTE
+    while [ "$llm_valid" = false ]; do
+        print_status "[IOTRAC] Testando LLM..."
+        
+        # Validação LLM real
+        validate_llm_api_key "$llm_api_key"
+        local llm_exit_code=$?
+        
+        case $llm_exit_code in
+            0)
+                print_success "✅ LLM validada - IA avançada ativa"
+                llm_valid=true
+                llm_enabled=true
+                # REMOVER ARQUIVO TEMPORÁRIO (sucesso)
+                rm -f "$temp_key_file" 2>/dev/null
+                ;;
+            1)
+                # CLAVE INCORRECTA - Contar intentos
+                llm_attempts=$((llm_attempts + 1))
+                print_error "❌ API KEY inválida (tentativa $llm_attempts/3)"
+                
+                if [ $llm_attempts -ge 3 ]; then
+                    print_error "❌ Máximo de tentativas excedido!"
+                    print_status "Sistema será encerrado."
+                    rm -f "$temp_key_file" 2>/dev/null
+                    exit 1
+                fi
+                
+                # PEDIR NOVA CHAVE
+                read -p "Digite a API KEY novamente: " llm_api_key
+                if [ -z "$llm_api_key" ]; then
+                    print_error "❌ API KEY é obrigatória!"
+                    exit 1
+                fi
+                ;;
+            2|4|5|7)
+                # ERROR DE CONEXIÓN/RATE LIMIT - No contar como intento
+                case $llm_exit_code in
+                    2) print_warning "⚠️  Serviço temporariamente indisponível" ;;
+                    4|5) print_warning "⚠️  Erro de conexão com Together AI" ;;
+                    7) print_warning "⚠️  Rate limit atingido, aguarde alguns segundos" ;;
+                esac
+                
+                # GUARDAR CHAVE TEMPORARIAMENTE
+                echo "$llm_api_key" > "$temp_key_file"
+                chmod 600 "$temp_key_file" 2>/dev/null
+                
+                # PREGUNTAR SE QUER TENTAR DE NOVO
+                echo
+                read -p "Ocorreu erro de conexão. Tentar novamente? (S/n): " retry_choice
+                case "$retry_choice" in
+                    [Nn]|[Nn][Oo])
+                        print_error "❌ LLM é obrigatória para o sistema!"
+                        print_status "Sistema será encerrado."
+                        rm -f "$temp_key_file" 2>/dev/null
+                        exit 1
+                        ;;
+                    *)
+                        print_status "🔄 Tentando novamente em 3 segundos..."
+                        sleep 3
+                        ;;
+                esac
+                ;;
+            *)
+                print_error "❌ Erro desconhecido na validação LLM (código: $llm_exit_code)"
+                print_status "Sistema será encerrado."
+                rm -f "$temp_key_file" 2>/dev/null
+                exit 1
+                ;;
+        esac
+    done
+    
+    # ETAPA 3: Confirmação final
+    echo
+    print_success "✅ Credenciais validadas"
+    echo "📧 Email: $user_email"
+    if [ "$llm_enabled" = true ]; then
+        echo "🤖 IA: Avançada"
+    else
+        echo "🤖 IA: Heurística"
+    fi
+    echo
+    
+    # Salvar credenciais em variáveis de ambiente temporárias
+    export IOTRAC_EMAIL="$user_email"
+    export IOTRAC_PASSWORD="$user_password"
+    if [ "$llm_enabled" = true ]; then
+        export IOTRAC_LLM_KEY="$llm_api_key"
+    fi
+    export IOTRAC_LLM_ENABLED="$llm_enabled"
+    
+    print_status "Configurando sistema..."
+}
+
 # Função para verificar e configurar chaves AES
 setup_aes_keys() {
     print_status "🔐 Verificando configuração de chaves AES..."
@@ -183,6 +518,18 @@ check_system_dependencies() {
         fi
     fi
     
+    # Verificar netcat (para detecção de portas)
+    if ! command -v nc &> /dev/null; then
+        print_warning "⚠️  netcat não encontrado. Instalando..."
+        if command -v apt &> /dev/null; then
+            sudo apt update && sudo apt install -y netcat-openbsd
+        elif command -v yum &> /dev/null; then
+            sudo yum install -y nc
+        else
+            print_warning "⚠️  Continuando sem netcat (detecção de porta limitada)"
+        fi
+    fi
+    
     print_success "✅ Dependências do sistema verificadas!"
 }
 
@@ -196,26 +543,97 @@ check_process() {
     fi
 }
 
-# Função para matar processos
+# Função para matar processos ESPECÍFICOS do IOTRAC (SEM MATAR CURSOR!)
 kill_processes() {
-    print_status "🧹 Limpando processos anteriores..."
+    print_status "🧹 Limpando processos IOTRAC anteriores..."
     
-    # Lista de processos para matar
-    local processes=("uvicorn" "expo" "node" "python" "metro")
-    for proc in "${processes[@]}"; do
-        # Usar SIGTERM primeiro, depois SIGKILL se necessário
-        pkill -TERM -f "$proc" 2>/dev/null || true
-        sleep 1
-        pkill -KILL -f "$proc" 2>/dev/null || true
+    # VERIFICAR se lsof está disponível
+    if ! command -v lsof &> /dev/null; then
+        print_warning "⚠️  lsof não disponível, usando métodos alternativos"
+        # Fallback: usar netstat ou ss
+        pkill -TERM -f "uvicorn.*src\.main:app" 2>/dev/null || true
+        pkill -TERM -f "expo start" 2>/dev/null || true
+        pkill -TERM -f "yarn start" 2>/dev/null || true
+        sleep 2
+        pkill -KILL -f "uvicorn.*src\.main:app" 2>/dev/null || true
+        pkill -KILL -f "expo start" 2>/dev/null || true
+        pkill -KILL -f "yarn start" 2>/dev/null || true
+        print_success "✅ Processos IOTRAC limpos (método alternativo)"
+        return
+    fi
+    
+    # LISTA DE PUERTOS IOTRAC (ESPECÍFICOS)
+    local iotrac_ports=(8000 19000 19001 19002 19006 8081)
+    local killed_any=false
+    
+    # 1. LIMPAR PUERTOS ESPECÍFICOS DO IOTRAC
+    for port in "${iotrac_ports[@]}"; do
+        if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+            print_status "🔫 Matando processo na porta $port (IOTRAC)..."
+            
+            # Verificar se NÃO é processo do Cursor antes de matar
+            local pids=$(lsof -Pi :$port -sTCP:LISTEN -t 2>/dev/null)
+            for pid in $pids; do
+                local cmd=$(ps -p $pid -o comm= 2>/dev/null || echo "unknown")
+                if [[ "$cmd" != *"Cursor"* ]] && [[ "$cmd" != *"cursor"* ]]; then
+                    kill -TERM $pid 2>/dev/null || true
+                    killed_any=true
+                else
+                    print_warning "⚠️  Preservando processo Cursor (PID: $pid)"
+                fi
+            done
+        fi
     done
     
-    # Lista de portas para liberar
-    local ports=(8000 19000 19001 19002 19006)
-    for port in "${ports[@]}"; do
-        fuser -k "$port/tcp" 2>/dev/null || true
+    # Aguardar término gracioso
+    if [ "$killed_any" = true ]; then
+        sleep 2
+        
+        # 2. KILL FORÇADO se necessário
+        for port in "${iotrac_ports[@]}"; do
+            if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+                local pids=$(lsof -Pi :$port -sTCP:LISTEN -t 2>/dev/null)
+                for pid in $pids; do
+                    local cmd=$(ps -p $pid -o comm= 2>/dev/null || echo "unknown")
+                    if [[ "$cmd" != *"Cursor"* ]] && [[ "$cmd" != *"cursor"* ]]; then
+                        kill -KILL $pid 2>/dev/null || true
+                    fi
+                done
+            fi
+        done
+    fi
+    
+    # 3. PROCESSOS ESPECÍFICOS POR COMANDO (DUPLA VERIFICAÇÃO)
+    local specific_patterns=(
+        "uvicorn.*src\.main:app"
+        "expo start"
+        "yarn.*start.*iotrac"
+        "node.*metro.*iotrac"
+    )
+    
+    for pattern in "${specific_patterns[@]}"; do
+        if pgrep -f "$pattern" >/dev/null 2>&1; then
+            print_status "🎯 Matando: $pattern"
+            pkill -TERM -f "$pattern" 2>/dev/null || true
+            sleep 1
+            pkill -KILL -f "$pattern" 2>/dev/null || true
+        fi
     done
     
-    sleep 2
+    # 4. VERIFICAÇÃO FINAL
+    sleep 1
+    local remaining=0
+    for port in "${iotrac_ports[@]}"; do
+        if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+            remaining=$((remaining + 1))
+        fi
+    done
+    
+    if [ $remaining -eq 0 ]; then
+        print_success "✅ Todos os puertos IOTRAC limpos (Cursor preservado)"
+    else
+        print_warning "⚠️  $remaining puerto(s) ainda ocupado(s) - pode ser normal"
+    fi
 }
 
 # Função para iniciar backend
@@ -251,22 +669,108 @@ start_backend() {
     
     print_success "✅ Chaves AES verificadas e válidas!"
     
-    # Criar e ativar ambiente virtual
-    if [ ! -d "venv" ]; then
-        print_status "📦 Criando ambiente virtual Python..."
-        python3 -m venv venv
+    # Verificar e corrigir ambiente virtual corrompido
+    print_status "🔍 Verificando ambiente virtual Python..."
+    
+    local venv_corrupted=false
+    
+    # Verificar se venv existe e se está corrompido (AppImage)
+    if [ -d "venv" ]; then
+        if [ -L "venv/bin/python3" ]; then
+            local python_target=$(readlink "venv/bin/python3")
+            if [[ "$python_target" == *"Cursor"* ]] || [[ "$python_target" == *"AppImage"* ]]; then
+                print_warning "⚠️  Venv corrompido detectado (AppImage)"
+                venv_corrupted=true
+            fi
+        fi
     fi
     
-    source venv/bin/activate
+    # Recriar venv se corrompido ou não existir
+    if [ "$venv_corrupted" = true ] || [ ! -d "venv" ]; then
+        if [ "$venv_corrupted" = true ]; then
+            print_status "🧹 Removendo venv corrompido..."
+            rm -rf venv
+        fi
+        
+        print_status "📦 Criando ambiente virtual Python limpo..."
+        # Usar Python do sistema explicitamente
+        /usr/bin/python3 -m venv venv
+        
+        if [ $? -ne 0 ]; then
+            print_error "❌ Erro ao criar venv!"
+            exit 1
+        fi
+        
+        # Verificar se foi criado corretamente
+        if [ -L "venv/bin/python3" ]; then
+            local new_target=$(readlink "venv/bin/python3")
+            if [[ "$new_target" == *"Cursor"* ]] || [[ "$new_target" == *"AppImage"* ]]; then
+                print_error "❌ Venv ainda corrompido após recriação!"
+                print_status "Tentando fallback sem venv..."
+                rm -rf venv
+                # Continuar sem venv
+            else
+                print_success "✅ Venv criado corretamente"
+            fi
+        fi
+    else
+        print_success "✅ Venv já existe e está válido"
+    fi
     
-    # Instalar dependências
+    # Ativar venv se existe
+    local using_venv=false
+    if [ -d "venv" ] && [ -f "venv/bin/activate" ]; then
+        source venv/bin/activate
+        using_venv=true
+        print_status "🐍 Usando ambiente virtual"
+    else
+        print_warning "⚠️  Usando Python do sistema (sem venv)"
+    fi
+    
+    # Instalar dependências com fallbacks para diferentes sistemas
     print_status "📦 Instalando dependências Python..."
     print_status "⏳ Isso pode levar alguns minutos..."
-    pip install --upgrade pip
-    pip install -r requirements.txt
     
-    if [ $? -ne 0 ]; then
-        print_error "❌ Erro ao instalar dependências Python!"
+    # Upgrade pip primeiro
+    if [ "$using_venv" = true ]; then
+        pip install --upgrade pip
+    else
+        # Fallback para sistema
+        /usr/bin/python3 -m pip install --user --upgrade pip 2>/dev/null || true
+    fi
+    
+    # Instalar requirements com fallbacks
+    local install_success=false
+    
+    if [ "$using_venv" = true ]; then
+        # Tentativa 1: venv normal
+        if pip install -r requirements.txt; then
+            install_success=true
+        fi
+    fi
+    
+    if [ "$install_success" = false ]; then
+        print_warning "⚠️  Falha com venv, tentando instalação no usuário..."
+        
+        # Tentativa 2: --user (sem venv)
+        if /usr/bin/python3 -m pip install --user -r requirements.txt; then
+            install_success=true
+        else
+            # Tentativa 3: --break-system-packages (Kali Linux PEP 668)
+            print_warning "⚠️  Tentando --break-system-packages (PEP 668)..."
+            if /usr/bin/python3 -m pip install --user --break-system-packages -r requirements.txt; then
+                install_success=true
+                print_warning "⚠️  Usando --break-system-packages devido PEP 668"
+            fi
+        fi
+    fi
+    
+    if [ "$install_success" = false ]; then
+        print_error "❌ Falha ao instalar dependências Python em todos os métodos!"
+        print_status "Métodos tentados:"
+        print_status "1. Ambiente virtual (venv)"
+        print_status "2. Instalação no usuário (--user)"
+        print_status "3. Break system packages (--break-system-packages)"
         exit 1
     fi
     
@@ -490,47 +994,267 @@ start_frontend() {
     fi
 }
 
-# Função para detectar e configurar IP automaticamente
+# Função para configurar .env do backend com credenciais validadas
+configure_backend_env() {
+    print_status "⚙️  Configurando .env do backend..."
+    
+    local backend_dir="../iotrac-backend"
+    local env_file="$backend_dir/config/.env"
+    
+    if [ ! -f "$env_file" ]; then
+        print_error "❌ Arquivo .env do backend não encontrado!"
+        return 1
+    fi
+    
+    # Fazer backup
+    cp "$env_file" "${env_file}.backup" 2>/dev/null || true
+    
+    # Configurar EMAIL_USER e EMAIL_PASSWORD
+    if [ -n "$IOTRAC_EMAIL" ] && [ -n "$IOTRAC_PASSWORD" ]; then
+        # Atualizar EMAIL_USER
+        if grep -q "^EMAIL_USER=" "$env_file"; then
+            sed -i "s|^EMAIL_USER=.*|EMAIL_USER=$IOTRAC_EMAIL|" "$env_file"
+        else
+            echo "EMAIL_USER=$IOTRAC_EMAIL" >> "$env_file"
+        fi
+        
+        # Atualizar EMAIL_PASSWORD
+        if grep -q "^EMAIL_PASSWORD=" "$env_file"; then
+            sed -i "s|^EMAIL_PASSWORD=.*|EMAIL_PASSWORD=$IOTRAC_PASSWORD|" "$env_file"
+        else
+            echo "EMAIL_PASSWORD=$IOTRAC_PASSWORD" >> "$env_file"
+        fi
+        
+        # Atualizar EMAIL_FROM
+        if grep -q "^EMAIL_FROM=" "$env_file"; then
+            sed -i "s|^EMAIL_FROM=.*|EMAIL_FROM=IOTRAC <$IOTRAC_EMAIL>|" "$env_file"
+        else
+            echo "EMAIL_FROM=IOTRAC <$IOTRAC_EMAIL>" >> "$env_file"
+        fi
+        
+        print_success "✅ Credenciais de email configuradas no backend"
+    fi
+    
+    # Configurar LLM_API_KEY se fornecida
+    if [ "$IOTRAC_LLM_ENABLED" = true ] && [ -n "$IOTRAC_LLM_KEY" ]; then
+        if grep -q "^LLM_API_KEY=" "$env_file"; then
+            sed -i "s|^LLM_API_KEY=.*|LLM_API_KEY=$IOTRAC_LLM_KEY|" "$env_file"
+        else
+            echo "LLM_API_KEY=$IOTRAC_LLM_KEY" >> "$env_file"
+        fi
+        
+        if grep -q "^LLM_PROVIDER=" "$env_file"; then
+            sed -i "s|^LLM_PROVIDER=.*|LLM_PROVIDER=together|" "$env_file"
+        else
+            echo "LLM_PROVIDER=together" >> "$env_file"
+        fi
+        
+        if grep -q "^LLM_MODEL=" "$env_file"; then
+            sed -i "s|^LLM_MODEL=.*|LLM_MODEL=meta-llama/Llama-3.3-70B-Instruct-Turbo-Free|" "$env_file"
+        else
+            echo "LLM_MODEL=meta-llama/Llama-3.3-70B-Instruct-Turbo-Free" >> "$env_file"
+        fi
+        
+        print_success "✅ Configuração LLM adicionada ao backend"
+    else
+        print_status "⚠️  LLM não configurado (pulado ou falhou)"
+    fi
+    
+    return 0
+}
+
+# Função para detectar e configurar IP automaticamente (MELHORADA)
 configure_network_ip() {
     print_status "🌐 Configurando IP da rede automaticamente..."
     
-    # Detectar IP da interface principal (excluir localhost e IPv6)
-    local ip_address=$(hostname -I | awk '{for(i=1;i<=NF;i++) if($i ~ /^192\.168\.|^10\.|^172\./) print $i}' | head -1)
+    # Detectar IP da interface principal com múltiplos métodos
+    local ip_address=""
     
+    # Método 1: hostname -I (mais confiável)
+    ip_address=$(hostname -I | awk '{for(i=1;i<=NF;i++) if($i ~ /^192\.168\.|^10\.|^172\./) print $i}' | head -1)
+    
+    # Método 2: ip route (fallback)
     if [ -z "$ip_address" ]; then
-        # Fallback para localhost se não encontrar IP da rede
-        ip_address="localhost"
-        print_warning "⚠️  Não foi possível detectar IP da rede, usando localhost"
+        ip_address=$(ip route get 8.8.8.8 2>/dev/null | grep -oP 'src \K\S+' | head -1)
     fi
     
-    print_status "📍 IP detectado: $ip_address"
+    # Método 3: ifconfig (fallback)
+    if [ -z "$ip_address" ] && command -v ifconfig >/dev/null 2>&1; then
+        ip_address=$(ifconfig | grep -E 'inet (192\.168\.|10\.|172\.)' | awk '{print $2}' | head -1)
+    fi
     
-    # Atualizar arquivo de configuração do frontend
+    # Método 4: Detectar IP do colega automaticamente
+    if [ -z "$ip_address" ]; then
+        print_status "🔍 Detectando IP do colega automaticamente..."
+        # Buscar IPs na rede local
+        local network_ips=$(nmap -sn 192.168.1.0/24 2>/dev/null | grep -oP '192\.168\.1\.\d+' | head -5)
+        if [ -n "$network_ips" ]; then
+            # Usar primeiro IP encontrado que não seja gateway
+            for ip in $network_ips; do
+                if [ "$ip" != "192.168.1.1" ] && [ "$ip" != "192.168.1.254" ]; then
+                    ip_address="$ip"
+                    print_status "📡 IP do colega detectado: $ip_address"
+                    break
+                fi
+            done
+        fi
+    fi
+    
+    # Fallback final
+    if [ -z "$ip_address" ]; then
+        ip_address="localhost"
+        print_warning "⚠️  Usando localhost (não foi possível detectar IP da rede)"
+    fi
+    
+    print_success "✅ IP detectado: $ip_address"
+    
+    # IMPLEMENTAR SISTEMA: .env + ApiConfig.ts
+    local backend_url=""
+    
+    # 1. DETECTAR BACKEND DINÁMICAMENTE
+    print_status "🔍 Detectando backend ativo..."
+    
+    # Verificar se backend está rodando na porta 8000
+    if command -v nc &> /dev/null; then
+        # Usar netcat se disponível
+        if nc -z localhost 8000 2>/dev/null; then
+            backend_url="http://localhost:8000"
+            print_success "✅ Backend detectado em localhost:8000"
+        elif nc -z "$ip_address" 8000 2>/dev/null; then
+            backend_url="http://$ip_address:8000"
+            print_success "✅ Backend detectado em $ip_address:8000"
+        else
+            print_warning "⚠️  Backend não detectado via netcat, usando localhost"
+            backend_url="http://localhost:8000"
+        fi
+    else
+        # Fallback: tentar curl diretamente
+        if curl -s --connect-timeout 2 "http://localhost:8000/" >/dev/null 2>&1; then
+            backend_url="http://localhost:8000"
+            print_success "✅ Backend detectado em localhost:8000 (via curl)"
+        elif curl -s --connect-timeout 2 "http://$ip_address:8000/" >/dev/null 2>&1; then
+            backend_url="http://$ip_address:8000"
+            print_success "✅ Backend detectado em $ip_address:8000 (via curl)"
+        else
+            print_warning "⚠️  Backend não detectado, usando localhost como padrão"
+            backend_url="http://localhost:8000"
+        fi
+    fi
+    
+    # 2. CRIAR .env (mas automático)
+print_status "📝 Criando .env automático..."
+    cat > ".env" << EOF
+import Constants from 'expo-constants';
+
+export const API_CONFIG = {
+  BASE_URL: '$backend_url',
+};
+EOF
+    
+    if [ $? -eq 0 ]; then
+        print_success "✅ .env criado"
+    else
+        print_error "❌ Erro ao criar .env"
+        return 1
+    fi
+    
+    # 3. ATUALIZAR ApiConfig.ts AUTOMATICAMENTE
     local config_file="src/constants/ApiConfig.ts"
     if [ -f "$config_file" ]; then
+        print_status "⚙️  Atualizando ApiConfig.ts automaticamente..."
+        
         # Fazer backup
         cp "$config_file" "${config_file}.backup" 2>/dev/null || true
         
-        # Atualizar IP na configuração usando sed mais robusto
-        sed -i "s|BASE_URL: 'http://[^']*'|BASE_URL: 'http://$ip_address:8000'|g" "$config_file"
+        # Atualizar BASE_URL no ApiConfig.ts (método automático)
+        sed -i "s|BASE_URL: Constants.expoConfig?.extra?.API_URL|BASE_URL: '$backend_url'|g" "$config_file"
         
-        if [ $? -eq 0 ]; then
-            print_success "✅ Configuração de IP atualizada para: $ip_address"
-            return 0
+        # Verificar se a mudança foi feita
+        if grep -q "$backend_url" "$config_file"; then
+            print_success "✅ ApiConfig.ts atualizado para: $backend_url"
         else
-            print_warning "⚠️  Não foi possível atualizar configuração automaticamente"
-            # Restaurar backup
-            mv "${config_file}.backup" "$config_file" 2>/dev/null || true
-            return 1
+            print_warning "⚠️  Tentando método alternativo..."
+            # Método alternativo: substituir qualquer BASE_URL
+            sed -i "s|BASE_URL: '[^']*'|BASE_URL: '$backend_url'|g" "$config_file"
+            if grep -q "$backend_url" "$config_file"; then
+                print_success "✅ ApiConfig.ts atualizado (método alternativo)"
+            else
+                print_error "❌ Falha ao atualizar ApiConfig.ts"
+                # Restaurar backup
+                mv "${config_file}.backup" "$config_file" 2>/dev/null || true
+                return 1
+            fi
         fi
     else
-        print_warning "⚠️  Arquivo de configuração não encontrado: $config_file"
+        print_error "❌ ApiConfig.ts não encontrado em $config_file"
         return 1
     fi
+    
+    # 4. VERIFICAR CONFIGURAÇÃO FINAL
+    print_status "🔍 Verificando configuração final..."
+    if curl -s "$backend_url/" >/dev/null 2>&1; then
+        print_success "✅ Backend acessível em $backend_url"
+        
+        # Mostrar resumo
+        echo
+        print_success "🎉 CONFIGURAÇÃO IMPLEMENTADA:"
+        print_status "   • .env criado com BASE_URL: $backend_url"
+        print_status "   • ApiConfig.ts atualizado automaticamente"
+        print_status "   • Backend verificado e funcionando"
+        print_status "   • Sistema pronto para usar!"
+        echo
+        
+        return 0
+    else
+        print_warning "⚠️  Backend não acessível, mas configuração aplicada"
+        print_status "   • Verifique se o backend está rodando"
+        print_status "   • URL configurada: $backend_url"
+        return 0
+    fi
+}
+
+# Função de limpeza ao sair
+cleanup_on_exit() {
+    print_status "🧹 Limpando credenciais..."
+    
+    # 1. LIMPAR VARIÁVEIS TEMPORÁRIAS
+    unset IOTRAC_EMAIL
+    unset IOTRAC_PASSWORD
+    unset IOTRAC_LLM_KEY
+    unset IOTRAC_LLM_ENABLED
+    
+    # 2. LIMPAR .env DO BACKEND (SEGURANÇA CRÍTICA)
+    local backend_env="../iotrac-backend/config/.env"
+    if [ -f "$backend_env" ]; then
+        print_status "🔐 Limpando credenciais do .env do backend..."
+        
+        # Restaurar valores padrão (sem informação sensível)
+        sed -i 's|^EMAIL_USER=.*|EMAIL_USER=seu_email@gmail.com|' "$backend_env" 2>/dev/null || true
+        sed -i 's|^EMAIL_PASSWORD=.*|EMAIL_PASSWORD=sua_senha_de_app_gmail|' "$backend_env" 2>/dev/null || true
+        sed -i 's|^EMAIL_FROM=.*|EMAIL_FROM=IOTRAC <seu_email@gmail.com>|' "$backend_env" 2>/dev/null || true
+        sed -i 's|^LLM_API_KEY=.*|LLM_API_KEY=sua_chave_llm_aqui|' "$backend_env" 2>/dev/null || true
+        
+        print_success "✅ Credenciais removidas do .env (segurança garantida)"
+    fi
+    
+    # 3. REMOVER BACKUPS COM CREDENCIAIS
+    rm -f "../iotrac-backend/config/.env.backup" 2>/dev/null || true
+    
+    # 4. REMOVER ARQUIVO TEMPORÁRIO DE LLM
+    rm -f "/tmp/.iotrac_llm_temp_key" 2>/dev/null || true
+    
+    print_success "✅ Limpeza completa concluída - Nenhuma credencial persistente"
 }
 
 # Função principal
 main() {
+    # Registrar limpeza automática ao sair (TODAS AS SITUAÇÕES)
+    trap cleanup_on_exit EXIT SIGINT SIGTERM SIGQUIT SIGHUP
+    
+    # ETAPA 1: Validação segura de credenciais (NOVA!)
+    secure_credential_validation
+    
+    # ETAPA 2: Verificações básicas
     print_status "🚀 Iniciando IOTRAC - Sistema de Gerenciamento IoT"
     
     # Verificar diretório
@@ -543,13 +1267,18 @@ main() {
     # Verificar dependências do sistema
     check_system_dependencies
     
-    # Configurar IP automaticamente
+    # ETAPA 3: Configurações automáticas
+    # Detectar IP automaticamente (MELHORADO!)
     configure_network_ip
+    
+    # Configurar .env do backend com credenciais (NOVO!)
+    configure_backend_env
     
     # Verificar e configurar chaves AES
     setup_aes_keys
     
-    # Limpar processos anteriores
+    # ETAPA 4: Inicialização
+    # Limpar processos anteriores (MELHORADO!)
     kill_processes
     
     # Iniciar serviços
@@ -557,6 +1286,16 @@ main() {
     start_frontend
     
     print_success "✨ IOTRAC iniciado com sucesso!"
+    echo
+    echo "🎉 SISTEMA RESTAURADO COMPLETAMENTE!"
+    echo "✅ Validação segura de credenciais"
+    echo "✅ Detecção automática de IP"
+    echo "✅ Configuração automática de .env"
+    echo "✅ Correção de venv corrompido"
+    echo "✅ Kill de processos específicos"
+    echo "✅ Suporte para PEP 668 (Kali Linux)"
+    echo "✅ Integração LLM configurada"
+    echo
     print_status "📡 Backend: http://localhost:8000"
     print_status "📱 Expo DevTools: http://localhost:19002"
     print_status "🌐 Web: http://localhost:19006"
@@ -567,10 +1306,19 @@ main() {
     print_status "   2. Ou aguarde o QR code aparecer no terminal"
     print_status "   3. Escaneie com o app Expo Go no seu celular"
     print_status ""
+    print_status "🤖 IA IOTRAC configurada:"
+    if [ "$IOTRAC_LLM_ENABLED" = true ]; then
+        print_status "   • IA Avançada: Together AI (Llama-3.3-70B)"
+        print_status "   • IA Heurística: Regras locais"
+    else
+        print_status "   • IA Heurística: Regras locais"
+    fi
+    print_status "   • Endpoints: /ai/query, /ai/summary, /ai/recommendations"
+    print_status ""
     print_status "Para parar, pressione Ctrl+C"
     
     # Registrar handler para Ctrl+C
-    trap 'print_status "🛑 Parando Iotrac..."; kill_processes; exit 0' SIGINT SIGTERM
+    trap 'print_status "🛑 Parando Iotrac..."; kill_processes; cleanup_on_exit; exit 0' SIGINT SIGTERM
     
     # Manter script rodando e monitorar processos
     while true; do
