@@ -20,10 +20,38 @@ export function setAuthToken(token: string | null) {
   }
 }
 
-// Interceptor para manejar errores
+// Handlers de autenticação para refresh automático
+type AuthHandlers = {
+  getAccessToken: () => string | null;
+  refreshAuthToken: () => Promise<boolean>;
+};
+let authHandlers: Partial<AuthHandlers> = {};
+export function setAuthHandlers(handlers: AuthHandlers) {
+  authHandlers = handlers;
+}
+
+// Interceptor para manejar errores (com refresh automático em 401/403)
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
+    // Tentar refresh automático em 401/403
+    const status = error.response?.status;
+    const originalRequest: any = error.config || {};
+    if ((status === 401 || status === 403) && !originalRequest._retry && authHandlers.refreshAuthToken) {
+      originalRequest._retry = true;
+      try {
+        const refreshed = await authHandlers.refreshAuthToken();
+        if (refreshed) {
+          const token = authHandlers.getAccessToken ? authHandlers.getAccessToken() : null;
+          setAuthToken(token || null);
+          return api.request(originalRequest);
+        }
+      } catch (_) {
+        // segue para o fluxo de erro padrão abaixo
+      }
+    }
+
+    // Fluxo de erros padrão
     console.error('API Error:', error);
     
     if (error.response) {

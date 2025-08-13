@@ -57,7 +57,7 @@ const DevicesMenu = () => {
             </TouchableOpacity>
           </View>
           <Pressable 
-            style={[StyleSheet.absoluteFill, { zIndex: 1 }]} 
+            style={[StyleSheet.absoluteFill, { zIndex: 2 }]} 
             onPress={closeDropdown} 
           />
         </>
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 16,
     position: 'relative',
-    zIndex: 1,
+    zIndex: 3,
   },
   container: {
     flexDirection: 'row',
@@ -107,6 +107,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     minWidth: 200,
     elevation: 10,
+    zIndex: 4,
   },
   dropdownItem: {
     flexDirection: 'row',

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG } from '../constants/ApiConfig';
-import { setAuthToken } from '../services/api';
+import { setAuthToken, setAuthHandlers } from '../services/api';
 
 // Tipos para autenticação
 export interface User {
@@ -73,6 +73,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Carregar dados de autenticação ao iniciar
   useEffect(() => {
+    // Registrar handlers para refresh automático no axios
+    setAuthHandlers({
+      getAccessToken: () => authState.token,
+      refreshAuthToken: async () => await refreshAuthToken(),
+    });
     loadAuthData();
   }, []);
 

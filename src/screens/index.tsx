@@ -1,10 +1,11 @@
 import Device from "../components/Device";
 import DevicesMenu from "../components/DevicesMenu";
-import { View, Text, Alert, TouchableOpacity, FlatList, RefreshControl } from "react-native";
+import { View, Text, FlatList, RefreshControl, Image } from "react-native";
 import { useEffect, useState } from "react";
 import { apiService, Device as DeviceData, ProtectionStatus } from "../services/api";
 import Colors from "../constants/Colors";
 import { useDevices } from "../hooks/useApi";
+import Banner from "../components/Banner";
 
 export default function Index() {
   const { devices, loading, error, refreshDevices, removeDevice } = useDevices();
@@ -21,7 +22,6 @@ export default function Index() {
   };
 
   const onRefresh = async () => {
-    console.log('Refresh iniciado');
     setRefreshing(true);
     await refreshDevices();
     await loadProtectionStatus();
@@ -29,31 +29,20 @@ export default function Index() {
   };
 
   const handleDeleteDevice = async (deviceId: number) => {
-    console.log('🔄 Index: Iniciando remoção do dispositivo:', deviceId);
     await removeDevice(deviceId);
-    console.log('✅ Index: Dispositivo removido com sucesso:', deviceId);
   };
 
   useEffect(() => {
-    console.log('Componente Index montado');
     loadProtectionStatus();
-
-    // Atualizar status a cada 5 segundos
-    const interval = setInterval(() => {
-      loadProtectionStatus();
-    }, 5000);
-
-    // Limpar intervalo quando o componente for desmontado
+    const interval = setInterval(() => { loadProtectionStatus(); }, 5000);
     return () => clearInterval(interval);
   }, []);
 
   const getDeviceStatus = (device: DeviceData): 'Seguro' | 'Vulnerável' | 'Sob Ataque!' => {
-    // Usar proteção individual do dispositivo em vez da proteção global
     return device.protection_enabled ? 'Seguro' : 'Vulnerável';
   };
 
   const getDeviceTitle = (device: DeviceData) => {
-    // Mapeia os tipos de dispositivo para títulos mais amigáveis
     const typeMap: { [key: string]: string } = {
       'drone': 'Drone',
       'veículo': 'Veículo',
@@ -63,7 +52,6 @@ export default function Index() {
       'smart-tv': 'Smart TV',
       'smart-thermostat': 'Termostato Inteligente'
     };
-    
     return typeMap[device.device_type] || device.device_type;
   };
 
@@ -81,14 +69,35 @@ export default function Index() {
 
   const ListHeaderComponent = () => (
     <>
-      <DevicesMenu />
-      
+      {/* Barra azul no topo com logo à esquerda - SEM PADDING HORIZONTAL */}
+      <View style={{ 
+        backgroundColor: Colors.primary, 
+        paddingVertical: 12,
+        alignItems: 'flex-start'
+      }}>
+        <View style={{ paddingLeft: 16 }}>
+          <Image 
+            source={require("../../assets/images/logo-2.png")} 
+            style={{ width: 200, height: 50, resizeMode: 'contain' }} 
+          />
+        </View>
+      </View>
+
+      {/* Banner com imagem e fade */}
+      <Banner source={require("../../assets/images/banner.png")} />
+
+      {/* Dispositivos SEM PADDING HORIZONTAL para preencher toda a largura */}
+      <View style={{ paddingTop: 16 }}>
+        <DevicesMenu />
+      </View>
+
       {error && (
         <View style={{ 
           backgroundColor: '#ffebee', 
           padding: 16, 
           borderRadius: 8, 
-          marginBottom: 16 
+          marginBottom: 16,
+          marginHorizontal: 16,
         }}>
           <Text style={{ color: '#c62828', textAlign: 'center' }}>
             {error}
@@ -97,10 +106,7 @@ export default function Index() {
       )}
 
       {devices.length === 0 && !loading && !error && (
-        <View style={{ 
-          padding: 40,
-          alignItems: 'center'
-        }}>
+        <View style={{ padding: 40, alignItems: 'center' }}>
           <Text style={{ fontSize: 16, color: '#666', textAlign: 'center' }}>
             Nenhum dispositivo encontrado.{'\n'}
             Adicione um dispositivo para começar.
@@ -126,7 +132,7 @@ export default function Index() {
         data={devices}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ paddingBottom: 16 }}
         ListHeaderComponent={ListHeaderComponent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

@@ -7,6 +7,7 @@ const Colors = {
   error: "#dc3545",
   warning: "#ffcc00",
   neutral: "#ddd",
+  gray: "#808080",
   textPrimary: "#000",
   textSecondary: "#666"
 };

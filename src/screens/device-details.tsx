@@ -1,3 +1,4 @@
+import React from "react";
 import Colors from "../constants/Colors";
 import { ScrollView, Text, TouchableOpacity, View, Alert, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -5,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { apiService, Device, ProtectionStatus } from "../services/api";
 import { useDevices } from "../hooks/useApi";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function DeviceDetails() {
   const { id } = useLocalSearchParams();
@@ -13,6 +15,9 @@ export default function DeviceDetails() {
   const [loading, setLoading] = useState(true);
   const [sendingCommand, setSendingCommand] = useState(false);
   const { toggleDeviceProtection } = useDevices();
+  const { user } = useAuth();
+
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     if (id) {
@@ -55,7 +60,6 @@ export default function DeviceDetails() {
 
   const handleToggleProtection = async () => {
     if (!device) return;
-    
     try {
       setSendingCommand(true);
       const response = await toggleDeviceProtection(device.id);
@@ -145,41 +149,45 @@ export default function DeviceDetails() {
         </Text>
       </View>
 
-      {/* Controle de Proteção */}
-      <Text style={{ fontSize: 16, fontWeight: '500', marginBottom: 12 }}>
-        Controle de Proteção
-      </Text>
+      {/* Controle de Proteção - apenas admins */}
+      {isAdmin && (
+        <>
+          <Text style={{ fontSize: 16, fontWeight: '500', marginBottom: 12 }}>
+            Controle de Proteção
+          </Text>
 
-      <TouchableOpacity
-        onPress={handleToggleProtection}
-        disabled={sendingCommand}
-        style={{
-          backgroundColor: protectionStatus?.protection_enabled ? Colors.error : Colors.primary,
-          paddingVertical: 12,
-          paddingHorizontal: 20,
-          marginBottom: 32,
-          width: '100%',
-          alignItems: 'center',
-          flexDirection: 'row',
-          justifyContent: 'center',
-          gap: 8,
-          borderRadius: 8,
-          opacity: sendingCommand ? 0.6 : 1,
-        }}>
-        <Ionicons 
-          name={protectionStatus?.protection_enabled ? "alert-circle" : "shield"} 
-          size={20} 
-          style={{color: '#FFF'}} 
-        /> 
-        <Text style={{ color: '#FFF', fontWeight: 'bold' }}>
-          {sendingCommand 
-            ? "Processando..." 
-            : protectionStatus?.protection_enabled 
-              ? "Desativar Proteção" 
-              : "Ativar Proteção"
-          }
-        </Text>
-      </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleToggleProtection}
+            disabled={sendingCommand}
+            style={{
+              backgroundColor: protectionStatus?.protection_enabled ? Colors.error : Colors.primary,
+              paddingVertical: 12,
+              paddingHorizontal: 20,
+              marginBottom: 32,
+              width: '100%',
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              gap: 8,
+              borderRadius: 8,
+              opacity: sendingCommand ? 0.6 : 1,
+            }}>
+            <Ionicons 
+              name={protectionStatus?.protection_enabled ? "alert-circle" : "shield"} 
+              size={20} 
+              style={{color: '#FFF'}} 
+            /> 
+            <Text style={{ color: '#FFF', fontWeight: 'bold' }}>
+              {sendingCommand 
+                ? "Processando..." 
+                : protectionStatus?.protection_enabled 
+                  ? "Desativar Proteção" 
+                  : "Ativar Proteção"
+              }
+            </Text>
+          </TouchableOpacity>
+        </>
+      )}
 
     </ScrollView>
   );

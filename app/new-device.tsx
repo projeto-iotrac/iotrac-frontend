@@ -7,12 +7,16 @@ import { DEVICE_TYPES } from "../src/constants/ApiConfig";
 import { useRouter } from "expo-router";
 import Button from "../src/components/Button";
 import Toast from 'react-native-toast-message';
+import { useAuth } from "../src/contexts/AuthContext";
 
 export default function NewDevice() {
     const [selectedDeviceType, setSelectedDeviceType] = useState("");
     const [ipAddress, setIpAddress] = useState("");
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
+    const { user } = useAuth();
+
+    const isOperator = user?.role === 'admin' || user?.role === 'device_operator';
 
     const validateIpAddress = (ip: string) => {
         const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
@@ -43,7 +47,7 @@ export default function NewDevice() {
                 ip_address: ipAddress
             });
 
-            router.replace("/");
+            router.replace("/home");
 
             Toast.show({
                 type: 'success',
@@ -68,55 +72,56 @@ export default function NewDevice() {
                     </View>
                 )}
 
-                <View style={{ zIndex: 1 }}>
-                    <Text style={styles.label}>
-                        Escolha o tipo de dispositivo que deseja vincular:
-                    </Text>
+                <>
+                    <View style={{ zIndex: 1 }}>
+                        <Text style={styles.label}>
+                            Escolha o tipo de dispositivo que deseja vincular:
+                        </Text>
 
-                    <Dropdown
-                        placeholder="Selecione o tipo de dispositivo"
-                        items={DEVICE_TYPES}
-                        value={selectedDeviceType}
-                        onSelect={(value) => {
-                            setSelectedDeviceType(value);
-                            setError(null);
-                        }}
-                        style={[error && { borderColor: Colors.error }
-                        ]}
-                    />
-                </View>
-
-                <View>
-                    <Text style={styles.label}>Endereço IP do dispositivo:</Text>
-
-                    <TextInput
-                        style={[
-                            styles.input,
-                            error && styles.inputError
-                        ]}
-                        placeholder="Ex: 192.168.1.100"
-                        placeholderTextColor={'#c0c0c0'}
-                        value={ipAddress}
-                        onChangeText={(text) => {
-                            setIpAddress(text);
-                            setError(null);
-                        }}
-                        keyboardType="numeric"
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                    />
-                </View>
-
-                <View>
-                    <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                        <Text style={styles.label}>Conectar via bluetooth:</Text>
-                        <Text style={styles.tag}>Em breve!</Text>
+                        <Dropdown
+                            placeholder="Selecione o tipo de dispositivo"
+                            items={DEVICE_TYPES}
+                            value={selectedDeviceType}
+                            onSelect={(value) => {
+                                setSelectedDeviceType(value);
+                                setError(null);
+                            }}
+                            style={[error && { borderColor: Colors.error }]}
+                        />
                     </View>
 
-                    <Button text="Parear Dispositivo" icon="bluetooth" btnClass="buttonDisabled" disabled={true} />
-                </View>
+                    <View>
+                        <Text style={styles.label}>Endereço IP do dispositivo:</Text>
 
-                <Button text="Vincular Dispositivo" icon="add-circle" btnClass="buttonPrimary" onPress={handleRegisterDevice} />
+                        <TextInput
+                            style={[
+                                styles.input,
+                                error && styles.inputError
+                            ]}
+                            placeholder="Ex: 192.168.1.100"
+                            placeholderTextColor={'#c0c0c0'}
+                            value={ipAddress}
+                            onChangeText={(text) => {
+                                setIpAddress(text);
+                                setError(null);
+                            }}
+                            keyboardType="numeric"
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                        />
+                    </View>
+
+                    <View>
+                        <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                            <Text style={styles.label}>Conectar via bluetooth:</Text>
+                            <Text style={styles.tag}>Em breve!</Text>
+                        </View>
+
+                        <Button text="Parear Dispositivo" icon="bluetooth" btnClass="buttonDisabled" disabled={true} />
+                    </View>
+
+                    <Button text="Vincular Dispositivo" icon="add-circle" btnClass="buttonPrimary" onPress={handleRegisterDevice} />
+                </>
             </View>
         </ScrollView>
     );

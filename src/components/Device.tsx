@@ -6,6 +6,7 @@ import Colors from "../../src/constants/Colors";
 import { useDevices } from "../../src/hooks/useApi";
 import { Ionicons } from "@expo/vector-icons";
 import Button from './Button';
+import { useAuth } from "../contexts/AuthContext";
 
 interface DeviceProps {
   title: string;
@@ -32,36 +33,39 @@ const getStatusColor = (subtitle?: string) => {
 const Device: React.FC<DeviceProps> = ({ title, subtitle, href, deviceId, protectionEnabled, onDelete }) => {
   const router = useRouter();
   const { refreshDevices } = useDevices();
+  const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handlePress = () => {
     router.push(href);
   };
 
-const handleDeleteDevice = async (deviceId: number) => {
-  try {
-    setIsDeleting(true);
-    const startTime = Date.now();
+  const handleDeleteDevice = async (deviceId: number) => {
+    try {
+      setIsDeleting(true);
+      const startTime = Date.now();
 
-    await apiService.deleteDevice(deviceId);
-    await refreshDevices();
+      await apiService.deleteDevice(deviceId);
+      await refreshDevices();
 
-    const elapsed = Date.now() - startTime;
-    const minLoadingTime = 9000; // 1 segundo mínimo
+      const elapsed = Date.now() - startTime;
+      const minLoadingTime = 900; // 0.9 segundo mínimo para feedback visual
 
-    if (elapsed < minLoadingTime) {
-      await new Promise((resolve) => setTimeout(resolve, minLoadingTime - elapsed));
+      if (elapsed < minLoadingTime) {
+        await new Promise((resolve) => setTimeout(resolve, minLoadingTime - elapsed));
+      }
+
+      Alert.alert("Sucesso", "Dispositivo excluído com sucesso!");
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Erro ao excluir dispositivo";
+      console.error("Erro ao excluir dispositivo:", errorMessage);
+      Alert.alert("Erro", errorMessage);
+    } finally {
+      setIsDeleting(false);
     }
+  };
 
-    Alert.alert("Sucesso", "Dispositivo excluído com sucesso!");
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Erro ao excluir dispositivo";
-    console.error("Erro ao excluir dispositivo:", errorMessage);
-    Alert.alert("Erro", errorMessage);
-  } finally {
-    setIsDeleting(false);
-  }
-};
+  const isAdmin = user?.role === 'admin';
 
   return (
     <>
@@ -86,7 +90,7 @@ const handleDeleteDevice = async (deviceId: number) => {
                   size={16}
                   color={protectionEnabled ? Colors.success : Colors.warning}
                 />
-                <Text style={[styles.protectionText, { color: protectionEnabled ? Colors.success : Colors.warning }]}>
+                <Text style={[styles.protectionText, { color: protectionEnabled ? Colors.success : Colors.warning }]}> 
                   {protectionEnabled ? "Protegido" : "Desprotegido"}
                 </Text>
               </View>
@@ -94,14 +98,16 @@ const handleDeleteDevice = async (deviceId: number) => {
           </View>
 
           <View style={styles.actions}>
-            <Button
-              icon="trash"
-              btnClass="buttonDelete"
-              onPress={() => {
-                handleDeleteDevice(deviceId);
-              }}
-              disabled={isDeleting}
-            />
+            {isAdmin && (
+              <Button
+                icon="trash"
+                btnClass="buttonDelete"
+                onPress={() => {
+                  handleDeleteDevice(deviceId);
+                }}
+                disabled={isDeleting}
+              />
+            )}
           </View>
         </View>
       </TouchableOpacity>

@@ -16,7 +16,17 @@ export const API_CONFIG = {
     REGISTER_DEVICE: '/device/register',
     DELETE_DEVICE: (id: number) => `/devices/${id}`,
     DEVICE_PROTECTION_STATUS: (id: number) => `/devices/${id}/protection`,
-    DEVICE_PROTECTION_TOGGLE: (id: number) => `/devices/${id}/protection/toggle`
+    DEVICE_PROTECTION_TOGGLE: (id: number) => `/devices/${id}/protection/toggle`,
+    // Endpoints de IA
+    AI_QUERY: '/ai/query',
+    AI_SUMMARY: '/ai/summary',
+    AI_RECOMMENDATIONS: '/ai/recommendations',
+    AI_STATUS: '/ai/status',
+    // Endpoints de logs avançados
+    LOGS_SIMPLE: '/logs/simple',
+    LOGS_ADVANCED: '/logs/advanced',
+    LOGS_ALERTS: '/logs/simple/alerts',
+    LOGS_SUMMARY: '/logs/simple/summary'
   },
   
   // Timeout para as peticiones (aumentado para 15 segundos)

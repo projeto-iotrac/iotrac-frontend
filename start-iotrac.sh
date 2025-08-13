@@ -967,6 +967,20 @@ start_frontend() {
         exit 1
     fi
     
+    # Verificar dependências críticas
+    print_status "🔍 Verificando dependências críticas..."
+    if ! node -e "require('@react-native-async-storage/async-storage')" 2>/dev/null; then
+        print_warning "⚠️  AsyncStorage não encontrado. Instalando..."
+        npm install @react-native-async-storage/async-storage
+        if [ $? -ne 0 ]; then
+            print_error "❌ Erro ao instalar AsyncStorage!"
+            return 1
+        fi
+        print_success "✅ AsyncStorage instalado com sucesso!"
+    else
+        print_success "✅ AsyncStorage já está instalado"
+    fi
+    
     # Iniciar Expo (mostrar output para ver QR code)
     print_status "🚀 Iniciando Expo..."
     print_status "📱 Aguarde o QR code aparecer..."

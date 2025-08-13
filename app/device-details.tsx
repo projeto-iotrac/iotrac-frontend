@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { apiService, Device, ProtectionStatus } from "../src/services/api";
 import { useDevices } from "../src/hooks/useApi";
+import StandardHeader from "../src/components/StandardHeader";
 
 export default function DeviceDetails() {
   const { id } = useLocalSearchParams();
@@ -113,6 +114,7 @@ export default function DeviceDetails() {
 
   return (
     <ScrollView style={styles.container}>
+      <StandardHeader title="Detalhes do Dispositivo" />
       <Text style={{ fontSize: 20, fontWeight: '500', marginVertical: 16 }}>
         Detalhes do Dispositivo
       </Text>

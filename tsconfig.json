@@ -14,10 +14,9 @@
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx",
-    "../src/**/*.ts",
-    "../src/**/*.tsx",
-    "../app/**/*.ts",
-    "../app/**/*.tsx"
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "src/screens/**"
   ]
 }
