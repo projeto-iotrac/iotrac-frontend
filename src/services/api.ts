@@ -8,6 +8,18 @@ const api = axios.create({
   headers: API_CONFIG.DEFAULT_HEADERS,
 });
 
+// Utilitários para autenticação via header Authorization
+export function setAuthToken(token: string | null) {
+  if (token) {
+    (api.defaults.headers as any).common = (api.defaults.headers as any).common || {};
+    (api.defaults.headers as any).common['Authorization'] = `Bearer ${token}`;
+  } else {
+    if ((api.defaults.headers as any).common) {
+      delete (api.defaults.headers as any).common['Authorization'];
+    }
+  }
+}
+
 // Interceptor para manejar errores
 api.interceptors.response.use(
   (response) => response,
@@ -29,6 +41,9 @@ api.interceptors.response.use(
           return Promise.reject(new Error('Dispositivo não encontrado'));
         case 409:
           return Promise.reject(new Error('Dispositivo já existe com este IP'));
+        case 401:
+        case 403:
+          return Promise.reject(new Error(detail || 'Não autenticado'));
         case 500:
           return Promise.reject(new Error('Erro interno do servidor'));
         default:
@@ -112,6 +127,57 @@ export interface DeviceToggleResponse {
   protection_enabled: boolean;
   message: string;
   timestamp: string;
+}
+
+// Interfaces para IA
+export interface AIQueryRequest {
+  query: string;
+  context?: string;
+}
+
+export interface AIResponse {
+  response: string;
+  confidence: number;
+  suggestions: string[];
+  timestamp: string;
+}
+
+export interface AISummaryResponse {
+  summary: string;
+  key_points: string[];
+  recommendations: string[];
+  timestamp: string;
+}
+
+export interface AIRecommendation {
+  id: number;
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  category: string;
+  timestamp: string;
+}
+
+// Interfaces para logs avançados
+export interface SimpleLogEntry {
+  id: number;
+  timestamp: string;
+  type: string;
+  icon: string;
+  title: string;
+  message: string;
+  severity: 'info' | 'warning' | 'critical';
+  device_name?: string;
+  device_id?: number;
+}
+
+export interface LogSummary {
+  total_events: number;
+  device_connections: number;
+  security_alerts: number;
+  attacks_blocked: number;
+  anomalies_detected: number;
+  last_24h_events: number;
 }
 
 // Servicios de API
@@ -199,6 +265,51 @@ export const apiService = {
   // Alternar protección de un dispositivo específico
   async toggleDeviceProtection(deviceId: number): Promise<DeviceToggleResponse> {
     const response: AxiosResponse<DeviceToggleResponse> = await api.post(API_CONFIG.ENDPOINTS.DEVICE_PROTECTION_TOGGLE(deviceId));
+    return response.data;
+  },
+
+  // Métodos de IA
+  async queryAI(query: string, context?: string): Promise<AIResponse> {
+    const response: AxiosResponse<AIResponse> = await api.post(API_CONFIG.ENDPOINTS.AI_QUERY, {
+      query,
+      context
+    });
+    return response.data;
+  },
+
+  async getAISummary(): Promise<AISummaryResponse> {
+    const response: AxiosResponse<AISummaryResponse> = await api.get(API_CONFIG.ENDPOINTS.AI_SUMMARY);
+    return response.data;
+  },
+
+  async getAIRecommendations(): Promise<AIRecommendation[]> {
+    const response: AxiosResponse<AIRecommendation[]> = await api.get(API_CONFIG.ENDPOINTS.AI_RECOMMENDATIONS);
+    return response.data;
+  },
+
+  async getAIStatus(): Promise<any> {
+    const response: AxiosResponse = await api.get(API_CONFIG.ENDPOINTS.AI_STATUS);
+    return response.data;
+  },
+
+  // Métodos para logs avançados
+  async getSimpleLogs(): Promise<SimpleLogEntry[]> {
+    const response: AxiosResponse<SimpleLogEntry[]> = await api.get(API_CONFIG.ENDPOINTS.LOGS_SIMPLE);
+    return response.data;
+  },
+
+  async getAdvancedLogs(): Promise<LogEntry[]> {
+    const response: AxiosResponse<LogEntry[]> = await api.get(API_CONFIG.ENDPOINTS.LOGS_ADVANCED);
+    return response.data;
+  },
+
+  async getLogAlerts(): Promise<SimpleLogEntry[]> {
+    const response: AxiosResponse<SimpleLogEntry[]> = await api.get(API_CONFIG.ENDPOINTS.LOGS_ALERTS);
+    return response.data;
+  },
+
+  async getLogSummary(): Promise<LogSummary> {
+    const response: AxiosResponse<LogSummary> = await api.get(API_CONFIG.ENDPOINTS.LOGS_SUMMARY);
     return response.data;
   },
 };
