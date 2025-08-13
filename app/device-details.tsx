@@ -113,11 +113,12 @@ export default function DeviceDetails() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <StandardHeader title="Detalhes do Dispositivo" />
-      <Text style={{ fontSize: 20, fontWeight: '500', marginVertical: 16 }}>
-        Detalhes do Dispositivo
-      </Text>
+    <View style={{ flex: 1 }}>
+      <StandardHeader />
+      <ScrollView style={styles.container}>
+        <Text style={{ fontSize: 20, fontWeight: '500', marginVertical: 16 }}>
+          Detalhes do Dispositivo
+        </Text>
 
       <View style={styles.contentContainer}>
         <Text><span style={styles.textBold}>Nome:</span> {getDeviceTitle(device.device_type)}</Text>
@@ -165,7 +166,8 @@ export default function DeviceDetails() {
           <Text style={styles.label}>Obs.: Ao desativar a proteção, lembre-se de que o dispositivo ficará vulnerável a ataques. A IOTRAC não se responsabiliza por quaisquer prejuízos causados após a desativação da proteção.</Text>
         </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 

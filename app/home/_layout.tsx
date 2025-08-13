@@ -38,6 +38,9 @@ export default function HomeTabsLayout() {
       <Tabs.Screen name="logs" options={{ title: "Logs do Sistema" }} />
       <Tabs.Screen name="index" options={{ title: "Início" }} />
       <Tabs.Screen name="argos-bot" options={{ title: "Argos Bot" }} />
+
+      {/* Rotas que não devem aparecer como abas */}
+      <Tabs.Screen name="device-details" options={{ href: null }} />
     </Tabs>
   );
 } 

@@ -26,7 +26,7 @@ const DevicesMenu = () => {
   };
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, dropdownVisible && styles.wrapperExpanded]}>
       <View style={styles.container}>
         <Text style={styles.text}>Dispositivos</Text>
 
@@ -73,6 +73,9 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 3,
   },
+  wrapperExpanded: {
+    marginBottom: 15, // espaço muito sutil para o dropdown
+  },
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -91,9 +94,6 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   dropdown: {
-    position: 'absolute',
-    top: 30,
-    right: 9,
     backgroundColor: '#fff',
     borderRadius: 8,
     paddingVertical: 4,
@@ -107,7 +107,9 @@ const styles = StyleSheet.create({
     display: 'flex',
     minWidth: 200,
     elevation: 10,
-    zIndex: 4,
+    marginTop: 8,
+    alignSelf: 'flex-end',
+    marginRight: 9,
   },
   dropdownItem: {
     flexDirection: 'row',

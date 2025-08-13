@@ -70,7 +70,7 @@ export default function Index() {
       key={item.id}
       title={getDeviceTitle(item)}
       subtitle={getDeviceStatus(item)}
-      href={`/device-details?id=${item.id}`}
+      href={`/home/device-details?id=${item.id}`}
       deviceId={item.id}
       protectionEnabled={item.protection_enabled}
       onDelete={handleDeleteDevice}
