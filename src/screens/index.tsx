@@ -12,10 +12,18 @@ export default function Index() {
   const [refreshing, setRefreshing] = useState(false);
   const [protectionStatus, setProtectionStatus] = useState<ProtectionStatus | null>(null);
 
-  const loadProtectionStatus = async () => {
+  const loadProtectionStatus = async (showLoading = false) => {
     try {
       const status = await apiService.getProtectionStatus();
-      setProtectionStatus(status);
+      // Só atualiza se houver mudanças reais (silencioso)
+      setProtectionStatus(prevStatus => {
+        const hasChanges = !prevStatus || JSON.stringify(prevStatus) !== JSON.stringify(status);
+        if (hasChanges) {
+          console.log('🔄 Status de proteção atualizado silenciosamente');
+          return status;
+        }
+        return prevStatus; // Não re-renderiza se não mudou
+      });
     } catch (err) {
       console.error('Erro ao carregar status de proteção:', err);
     }
@@ -24,7 +32,7 @@ export default function Index() {
   const onRefresh = async () => {
     setRefreshing(true);
     await refreshDevices();
-    await loadProtectionStatus();
+    await loadProtectionStatus(true); // Manual com feedback visual
     setRefreshing(false);
   };
 
@@ -33,8 +41,10 @@ export default function Index() {
   };
 
   useEffect(() => {
-    loadProtectionStatus();
-    const interval = setInterval(() => { loadProtectionStatus(); }, 5000);
+    loadProtectionStatus(true); // Primeira carga
+    const interval = setInterval(() => { 
+      loadProtectionStatus(false); // Atualizações silenciosas para segurança
+    }, 20000); // 20s - silencioso para detectar mudanças de segurança
     return () => clearInterval(interval);
   }, []);
 

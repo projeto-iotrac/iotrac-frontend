@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiService } from '../services/api';
 
 export interface ApiState<T> {
@@ -107,21 +107,21 @@ export function useConnectionStatus() {
     setIsChecking(true);
     try {
       await apiService.checkApiStatus();
-      setIsConnected(true);
+      setIsConnected(prev => prev !== true ? true : prev); // Só atualiza se mudou
       setLastCheck(new Date());
     } catch (error) {
-      setIsConnected(false);
+      setIsConnected(prev => prev !== false ? false : prev); // Só atualiza se mudou
       setLastCheck(new Date());
     } finally {
       setIsChecking(false);
     }
   }, []);
 
-  // Verificar conectividade periodicamente
+  // Verificar conectividade periodicamente (silencioso)
   useEffect(() => {
     checkConnection();
     
-    const interval = setInterval(checkConnection, 30000); // Verificar a cada 30 segundos
+    const interval = setInterval(checkConnection, 60000); // 60s - silencioso
     
     return () => clearInterval(interval);
   }, [checkConnection]);
@@ -134,25 +134,33 @@ export function useConnectionStatus() {
   };
 }
 
-// Hook para dispositivos com cache e atualização automática
+// Hook para dispositivos com atualizações inteligentes
 export function useDevices() {
   const [devices, setDevices] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
-  const fetchDevices = useCallback(async () => {
-    setLoading(true);
+  const fetchDevices = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
     
     try {
       const data = await apiService.getDevices();
-      setDevices(data);
-      setLastUpdate(new Date());
+      // Comparação inteligente: só atualiza se realmente mudou
+      setDevices(prevDevices => {
+        const hasChanges = JSON.stringify(prevDevices) !== JSON.stringify(data);
+        if (hasChanges) {
+          console.log('🔄 Dispositivos atualizados silenciosamente');
+          setLastUpdate(new Date());
+          return data;
+        }
+        return prevDevices; // Não re-renderiza se não mudou
+      });
     } catch (error: any) {
       setError(error.message || 'Erro ao carregar dispositivos');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, []);
 
@@ -194,14 +202,16 @@ export function useDevices() {
   }, []);
 
   const refreshDevices = useCallback(() => {
-    fetchDevices();
+    fetchDevices(true); // Com loading visível
   }, [fetchDevices]);
 
-  // Atualizar dispositivos periodicamente
+  // Atualização silenciosa em background para segurança
   useEffect(() => {
-    fetchDevices();
+    fetchDevices(true); // Primeira carga com loading
     
-    const interval = setInterval(fetchDevices, 10000); // Atualizar a cada 10 segundos
+    const interval = setInterval(() => {
+      fetchDevices(false); // Atualizações silenciosas sem loading
+    }, 30000); // 30s - silencioso
     
     return () => clearInterval(interval);
   }, [fetchDevices]);
@@ -218,31 +228,41 @@ export function useDevices() {
   };
 }
 
-// Hook para logs com atualização em tempo real
+// Hook para logs com atualizações inteligentes
 export function useLogs(limit: number = 50) {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchLogs = useCallback(async () => {
-    setLoading(true);
+  const fetchLogs = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
     
     try {
       const data = await apiService.getLogs(limit);
-      setLogs(data);
+      // Só atualiza se houver mudanças reais
+      setLogs(prevLogs => {
+        const hasChanges = JSON.stringify(prevLogs) !== JSON.stringify(data);
+        if (hasChanges) {
+          console.log('🔄 Logs atualizados silenciosamente');
+          return data;
+        }
+        return prevLogs; // Não re-renderiza se não mudou
+      });
     } catch (error: any) {
       setError(error.message || 'Erro ao carregar logs');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [limit]);
 
-  // Atualizar logs frequentemente
+  // Atualização silenciosa para detectar eventos de segurança
   useEffect(() => {
-    fetchLogs();
+    fetchLogs(true); // Primeira carga com loading
     
-    const interval = setInterval(fetchLogs, 5000); // Atualizar a cada 5 segundos
+    const interval = setInterval(() => {
+      fetchLogs(false); // Atualizações silenciosas sem loading
+    }, 15000); // 15s - silencioso para detectar eventos de segurança
     
     return () => clearInterval(interval);
   }, [fetchLogs]);
@@ -251,6 +271,6 @@ export function useLogs(limit: number = 50) {
     logs,
     loading,
     error,
-    refreshLogs: fetchLogs
+    refreshLogs: () => fetchLogs(true) // Manual com loading
   };
 } 
