@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { apiService, LogEntry } from '../services/api';
 import Colors from '../constants/Colors';
 import StandardHeader from '../components/StandardHeader';
+import { Link } from 'expo-router';
 
 export default function LogsScreen({ navigation }: any) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -102,6 +103,9 @@ export default function LogsScreen({ navigation }: any) {
     <View style={styles.container}>
       {/* Header padrão com barra azul e logo IOTRAC */}
       <StandardHeader title="Logs do Sistema" />
+      <View style={{ paddingHorizontal: 16, paddingVertical: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' }}>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000' }}>Logs do Sistema</Text>
+      </View>
       
       <ScrollView
         style={styles.scrollView}
@@ -110,14 +114,11 @@ export default function LogsScreen({ navigation }: any) {
         }
       >
         {/* Botão para Logs Avançados */}
-        <TouchableOpacity
-          style={styles.advancedButton}
-          onPress={() => navigation.navigate('AdvancedLogs')}
-        >
-          <Ionicons name="analytics" size={24} color="#fff" />
-          <Text style={styles.advancedButtonText}>Logs Avançados</Text>
-          <Ionicons name="chevron-forward" size={24} color="#fff" />
-        </TouchableOpacity>
+        <Link href="/(tabs)/advanced-logs" asChild>
+          <TouchableOpacity style={styles.advancedButtonRaw}>
+            <Text style={styles.advancedButtonRawText}>Abrir Logs Avançados</Text>
+          </TouchableOpacity>
+        </Link>
 
         {/* Estatísticas Rápidas */}
         <View style={styles.statsContainer}>
@@ -242,15 +243,11 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    padding: 16,
+    padding: 12,
     backgroundColor: '#fff',
     marginHorizontal: 16,
-    borderRadius: 12,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    borderWidth: 1,
+    borderColor: '#d0d0d0',
   },
   statItem: {
     alignItems: 'center',
@@ -266,18 +263,19 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#000',
     margin: 16,
     marginBottom: 8,
   },
   emptyContainer: {
     alignItems: 'center',
-    padding: 40,
+    padding: 20,
     backgroundColor: '#fff',
     margin: 16,
-    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#d0d0d0',
   },
   emptyText: {
     fontSize: 16,
@@ -294,13 +292,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginHorizontal: 16,
     marginBottom: 8,
-    borderRadius: 8,
-    padding: 12,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#d0d0d0',
   },
   logHeader: {
     flexDirection: 'row',
@@ -341,17 +335,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: 12,
     margin: 16,
     backgroundColor: '#fff',
-    borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.primary,
+    borderColor: '#d0d0d0',
   },
   moreButtonText: {
-    color: Colors.primary,
-    fontSize: 16,
-    fontWeight: '500',
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '400',
     marginRight: 8,
+  },
+  advancedButtonRaw: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#cfcfcf',
+    margin: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  advancedButtonRawText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '400',
   },
 }); 

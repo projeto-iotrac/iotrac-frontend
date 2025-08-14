@@ -1,1 +1,1 @@
-// (intencionalmente vazio) 
+export { default } from "../../src/screens/advanced-logs"; 
