@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, Alert, Modal, ActivityIndicator } from 'react-native';
 import { apiService } from "../../src/services/api";
 import Colors from "../../src/constants/Colors";
-import { useDevices } from "../../src/hooks/useApi";
 import { Ionicons } from "@expo/vector-icons";
 import Button from './Button';
 import { useAuth } from "../contexts/AuthContext";
@@ -32,7 +31,6 @@ const getStatusColor = (subtitle?: string) => {
 
 const Device: React.FC<DeviceProps> = ({ title, subtitle, href, deviceId, protectionEnabled, onDelete }) => {
   const router = useRouter();
-  const { refreshDevices } = useDevices();
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -43,29 +41,24 @@ const Device: React.FC<DeviceProps> = ({ title, subtitle, href, deviceId, protec
   const handleDeleteDevice = async (deviceId: number) => {
     try {
       setIsDeleting(true);
-      const startTime = Date.now();
 
-      await apiService.deleteDevice(deviceId);
-      await refreshDevices();
-
-      const elapsed = Date.now() - startTime;
-      const minLoadingTime = 900; // 0.9 segundo mínimo para feedback visual
-
-      if (elapsed < minLoadingTime) {
-        await new Promise((resolve) => setTimeout(resolve, minLoadingTime - elapsed));
+      if (onDelete) {
+        await onDelete(deviceId); // Atualiza lista imediatamente via pai (Home)
+      } else {
+        await apiService.deleteDevice(deviceId); // Fallback
       }
 
       Alert.alert("Sucesso", "Dispositivo excluído com sucesso!");
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Erro ao excluir dispositivo";
-      console.error("Erro ao excluir dispositivo:", errorMessage);
+      console.error("❌ Erro ao excluir dispositivo:", errorMessage);
       Alert.alert("Erro", errorMessage);
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const isAdmin = user?.role === 'admin';
+  const isOperator = user?.role === 'admin' || user?.role === 'device_operator';
 
   return (
     <>
@@ -76,7 +69,7 @@ const Device: React.FC<DeviceProps> = ({ title, subtitle, href, deviceId, protec
         delayPressIn={200}
         disabled={isDeleting}
       >
-        <View style={styles.content}>
+        <View style={styles.content}> 
           <View style={styles.info}>
             <Text style={styles.title}>{title}</Text>
             <View style={styles.statusContainer}>
@@ -98,7 +91,7 @@ const Device: React.FC<DeviceProps> = ({ title, subtitle, href, deviceId, protec
           </View>
 
           <View style={styles.actions}>
-            {isAdmin && (
+            {isOperator && (
               <Button
                 icon="trash"
                 btnClass="buttonDelete"
@@ -178,24 +171,20 @@ const styles = StyleSheet.create({
   },
   protectionText: {
     fontSize: 12,
-    marginLeft: 4,
-    fontWeight: '500',
+    marginLeft: 6,
   },
   actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginLeft: 12,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.25)',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   modalText: {
-    marginTop: 12,
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    marginTop: 8,
+    color: Colors.primary,
   },
 });
 

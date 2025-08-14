@@ -266,13 +266,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ refresh_token: authState.refreshToken }),
       });
 
-      const data = await response.json();
+      let data: any = {};
+      try { data = await response.json(); } catch {}
 
       if (response.ok) {
         if (!authState.user) return false;
-        await saveAuthData(data.access_token, data.refresh_token, authState.user);
-        setAuthToken(data.access_token);
-        setAuthState(prev => ({ ...prev, token: data.access_token, refreshToken: data.refresh_token }));
+        const newAccessToken = data.access_token;
+        if (!newAccessToken) return false;
+
+        // Backend retorna apenas access_token. Mantemos o refreshToken atual.
+        await saveAuthData(newAccessToken, authState.refreshToken, authState.user);
+        setAuthToken(newAccessToken);
+        setAuthState(prev => ({ ...prev, token: newAccessToken }));
         return true;
       } else {
         await logout();

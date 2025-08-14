@@ -37,6 +37,11 @@ export default function TOTPSetupScreen() {
           } else {
             setQr(data.qr_code_url);
             setError(null);
+            
+            // Mostrar mensagem se já configurado
+            if (data.already_configured) {
+              setError('TOTP já configurado e ativado. Use o código atual do seu Google Authenticator.');
+            }
           }
         } else {
           setError(data?.detail || `Falha ao iniciar TOTP (HTTP ${res.status})`);
@@ -67,26 +72,36 @@ export default function TOTPSetupScreen() {
       });
       let data: any = {};
       try { data = await res.json(); } catch {}
-      if (res.ok) {
-        if (data?.access_token && data?.refresh_token) {
-          try {
-            const meResp = await fetch(`${API_CONFIG.BASE_URL}/auth/me`, {
-              method: 'GET',
-              headers: { 'Authorization': `Bearer ${data.access_token}` },
-            });
-            let me: any = {};
-            try { me = await meResp.json(); } catch {}
-            if (meResp.ok && me) {
-              await applyAuthTokens(data.access_token, data.refresh_token, me);
-            }
-          } catch {}
-        }
-        if (!didNavigateRef.current) {
-          didNavigateRef.current = true;
-          router.replace('/home');
-        }
-      } else {
+
+      if (!res.ok) {
         setError(data?.detail || 'Código inválido');
+        return;
+      }
+
+      // Exigir sucesso explícito do backend
+      if (!data?.success) {
+        setError(data?.message || 'Código TOTP inválido ou expirado');
+        return;
+      }
+
+      // Aplicar tokens somente se presentes e sucesso
+      if (data?.access_token && data?.refresh_token) {
+        try {
+          const meResp = await fetch(`${API_CONFIG.BASE_URL}/auth/me`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${data.access_token}` },
+          });
+          let me: any = {};
+          try { me = await meResp.json(); } catch {}
+          if (meResp.ok && me) {
+            await applyAuthTokens(data.access_token, data.refresh_token, me);
+          }
+        } catch {}
+      }
+
+      if (!didNavigateRef.current) {
+        didNavigateRef.current = true;
+        router.replace('/home');
       }
     } catch (e) {
       setError('Falha de conexão');

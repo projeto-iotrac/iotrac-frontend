@@ -37,7 +37,7 @@ api.interceptors.response.use(
     // Tentar refresh automático em 401/403
     const status = error.response?.status;
     const originalRequest: any = error.config || {};
-    if ((status === 401 || status === 403) && !originalRequest._retry && authHandlers.refreshAuthToken) {
+    if (status === 401 && !originalRequest._retry && authHandlers.refreshAuthToken) {
       originalRequest._retry = true;
       try {
         const refreshed = await authHandlers.refreshAuthToken();
@@ -269,6 +269,9 @@ export const apiService = {
   async deleteDevice(deviceId: number): Promise<{ message: string }> {
     try {
       console.log('🔄 API Service: Enviando DELETE para dispositivo:', deviceId);
+      console.log('🔍 Debug Headers:', api.defaults.headers);
+      console.log('🔍 Debug Auth Header:', (api.defaults.headers as any).common?.Authorization);
+      
       const response: AxiosResponse<{ message: string }> = await api.delete(API_CONFIG.ENDPOINTS.DELETE_DEVICE(deviceId));
       console.log('✅ API Service: Resposta recebida:', response.data);
       return response.data;
