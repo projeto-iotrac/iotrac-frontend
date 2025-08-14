@@ -41,6 +41,7 @@ export default function HomeTabsLayout() {
 
       {/* Rotas que não devem aparecer como abas */}
       <Tabs.Screen name="device-details" options={{ href: null }} />
+      <Tabs.Screen name="new-device" options={{ href: null }} />
     </Tabs>
   );
 } 

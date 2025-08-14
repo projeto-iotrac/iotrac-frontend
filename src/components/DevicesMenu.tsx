@@ -19,8 +19,10 @@ const DevicesMenu = () => {
   const handleAddDevice = () => {
     closeDropdown();
     try {
-      router.push("/new-device");
+      console.log('🔄 Tentando navegar para /home/new-device');
+      router.push("/home/new-device");
     } catch (error) {
+      console.error('❌ Erro na navegação:', error);
       Alert.alert('Erro', 'Erro ao navegar para nova tela');
     }
   };
@@ -110,6 +112,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     alignSelf: 'flex-end',
     marginRight: 9,
+    zIndex: 3,
   },
   dropdownItem: {
     flexDirection: 'row',

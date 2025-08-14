@@ -1,11 +1,12 @@
 import Device from "../components/Device";
 import DevicesMenu from "../components/DevicesMenu";
 import { View, Text, FlatList, RefreshControl, Image } from "react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { apiService, Device as DeviceData, ProtectionStatus } from "../services/api";
 import Colors from "../constants/Colors";
 import { useDevices } from "../hooks/useApi";
 import Banner from "../components/Banner";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function Index() {
   const { devices, loading, error, refreshDevices, removeDevice } = useDevices();
@@ -15,14 +16,13 @@ export default function Index() {
   const loadProtectionStatus = async (showLoading = false) => {
     try {
       const status = await apiService.getProtectionStatus();
-      // Só atualiza se houver mudanças reais (silencioso)
       setProtectionStatus(prevStatus => {
         const hasChanges = !prevStatus || JSON.stringify(prevStatus) !== JSON.stringify(status);
         if (hasChanges) {
           console.log('🔄 Status de proteção atualizado silenciosamente');
           return status;
         }
-        return prevStatus; // Não re-renderiza se não mudou
+        return prevStatus;
       });
     } catch (err) {
       console.error('Erro ao carregar status de proteção:', err);
@@ -32,7 +32,7 @@ export default function Index() {
   const onRefresh = async () => {
     setRefreshing(true);
     await refreshDevices();
-    await loadProtectionStatus(true); // Manual com feedback visual
+    await loadProtectionStatus(true);
     setRefreshing(false);
   };
 
@@ -41,12 +41,21 @@ export default function Index() {
   };
 
   useEffect(() => {
-    loadProtectionStatus(true); // Primeira carga
+    loadProtectionStatus(true);
     const interval = setInterval(() => { 
-      loadProtectionStatus(false); // Atualizações silenciosas para segurança
-    }, 20000); // 20s - silencioso para detectar mudanças de segurança
+      loadProtectionStatus(false);
+    }, 20000);
     return () => clearInterval(interval);
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Ao voltar para Home, atualiza a lista imediatamente
+      refreshDevices();
+      loadProtectionStatus(false);
+      return undefined;
+    }, [refreshDevices])
+  );
 
   const getDeviceStatus = (device: DeviceData): 'Seguro' | 'Vulnerável' | 'Sob Ataque!' => {
     return device.protection_enabled ? 'Seguro' : 'Vulnerável';
@@ -118,7 +127,7 @@ export default function Index() {
       {devices.length === 0 && !loading && !error && (
         <View style={{ padding: 40, alignItems: 'center' }}>
           <Text style={{ fontSize: 16, color: '#666', textAlign: 'center' }}>
-            Nenhum dispositivo encontrado.{'\n'}
+            Nenhum dispositivo encontrado.{"\n"}
             Adicione um dispositivo para começar.
           </Text>
         </View>

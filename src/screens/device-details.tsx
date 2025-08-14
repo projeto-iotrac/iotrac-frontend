@@ -18,6 +18,7 @@ export default function DeviceDetails() {
   const { user } = useAuth();
 
   const isAdmin = user?.role === 'admin';
+  const isOperator = user?.role === 'admin' || user?.role === 'device_operator';
 
   useEffect(() => {
     if (id) {
@@ -149,8 +150,8 @@ export default function DeviceDetails() {
         </Text>
       </View>
 
-      {/* Controle de Proteção - apenas admins */}
-      {isAdmin && (
+      {/* Controle de Proteção - admins e operadores */}
+      {isOperator && (
         <>
           <Text style={{ fontSize: 16, fontWeight: '500', marginBottom: 12 }}>
             Controle de Proteção
