@@ -26,6 +26,18 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Resolver Python (python3 ou python) para compatibilidade multiplataforma
+resolve_python() {
+    if command -v python3 >/dev/null 2>&1; then
+        PYTHON_BIN=$(command -v python3)
+    elif command -v python >/dev/null 2>&1; then
+        PYTHON_BIN=$(command -v python)
+    else
+        print_error "❌ Python não encontrado! Instale Python3 ou Python."
+        exit 1
+    fi
+}
+
 # ===== SISTEMA DE VALIDAÇÃO SEGURA DE CREDENCIAIS =====
 
 # Função para validar email via SMTP real
@@ -36,7 +48,7 @@ validate_email_smtp() {
     print_status "Testando SMTP..."
     
     # ENVIAR EMAIL REAL para validação (não apenas testar login)
-    python3 -c "
+    "$PYTHON_BIN" -c "
 import smtplib
 import ssl
 import sys
@@ -107,7 +119,7 @@ validate_llm_api_key() {
     print_status "Testando LLM..."
     
     # Usar Python para teste LLM real com ENDPOINT CORRETO
-    python3 -c "
+    "$PYTHON_BIN" -c "
 import requests
 import json
 import sys
@@ -419,24 +431,22 @@ setup_aes_keys() {
         print_warning "⚠️  Chaves AES/HMAC não configuradas ou inválidas"
         print_status "🔑 Gerando novas chaves seguras..."
         
-        # Gerar chaves usando Python
-        cd "$backend_dir"
-        
-        # Verificar se Python está disponível
-        if ! command -v python3 &> /dev/null; then
-            print_error "❌ Python3 não encontrado para gerar chaves!"
-            return 1
+        # Garantir Python resolvido
+        if [ -z "$PYTHON_BIN" ]; then
+            resolve_python
         fi
         
+        cd "$backend_dir"
+        
         # Gerar AES_KEY
-        local new_aes_key=$(python3 -c "import os, base64; print(base64.b64encode(os.urandom(32)).decode())")
+        local new_aes_key=$("$PYTHON_BIN" -c "import os, base64; print(base64.b64encode(os.urandom(32)).decode())")
         if [ $? -ne 0 ]; then
             print_error "❌ Erro ao gerar AES_KEY!"
             return 1
         fi
         
         # Gerar HMAC_KEY
-        local new_hmac_key=$(python3 -c "import os, base64; print(base64.b64encode(os.urandom(32)).decode())")
+        local new_hmac_key=$("$PYTHON_BIN" -c "import os, base64; print(base64.b64encode(os.urandom(32)).decode())")
         if [ $? -ne 0 ]; then
             print_error "❌ Erro ao gerar HMAC_KEY!"
             return 1
@@ -481,14 +491,9 @@ setup_aes_keys() {
 check_system_dependencies() {
     print_status "🔍 Verificando dependências do sistema..."
     
-    # Verificar Python
-    if ! command -v python3 &> /dev/null; then
-        print_error "❌ Python3 não encontrado!"
-        print_status "Por favor, instale Python3:"
-        print_status "Ubuntu/Debian: sudo apt install python3 python3-pip python3-venv"
-        print_status "CentOS/RHEL: sudo yum install python3 python3-pip"
-        exit 1
-    fi
+    # Verificar Python (python3 ou python)
+    resolve_python
+    print_success "✅ Python encontrado: $($PYTHON_BIN --version 2>/dev/null)"
     
     # Verificar Node.js
     if ! command -v node &> /dev/null; then
@@ -693,8 +698,8 @@ start_backend() {
         fi
         
         print_status "📦 Criando ambiente virtual Python limpo..."
-        # Usar Python do sistema explicitamente
-        /usr/bin/python3 -m venv venv
+        # Usar Python resolvido explicitamente
+        "$PYTHON_BIN" -m venv venv
         
         if [ $? -ne 0 ]; then
             print_error "❌ Erro ao criar venv!"
@@ -736,7 +741,7 @@ start_backend() {
         pip install --upgrade pip
     else
         # Fallback para sistema
-        /usr/bin/python3 -m pip install --user --upgrade pip 2>/dev/null || true
+        "$PYTHON_BIN" -m pip install --user --upgrade pip 2>/dev/null || true
     fi
     
     # Instalar requirements com fallbacks
@@ -753,12 +758,12 @@ start_backend() {
         print_warning "⚠️  Falha com venv, tentando instalação no usuário..."
         
         # Tentativa 2: --user (sem venv)
-        if /usr/bin/python3 -m pip install --user -r requirements.txt; then
+        if "$PYTHON_BIN" -m pip install --user -r requirements.txt; then
             install_success=true
         else
             # Tentativa 3: --break-system-packages (Kali Linux PEP 668)
             print_warning "⚠️  Tentando --break-system-packages (PEP 668)..."
-            if /usr/bin/python3 -m pip install --user --break-system-packages -r requirements.txt; then
+            if "$PYTHON_BIN" -m pip install --user --break-system-packages -r requirements.txt; then
                 install_success=true
                 print_warning "⚠️  Usando --break-system-packages devido PEP 668"
             fi
@@ -1155,15 +1160,9 @@ configure_network_ip() {
         fi
     fi
     
-    # 2. CRIAR .env (mas automático)
+    # 2. CRIAR .env (formato correto)
 print_status "📝 Criando .env automático..."
-    cat > ".env" << EOF
-import Constants from 'expo-constants';
-
-export const API_CONFIG = {
-  BASE_URL: '$backend_url',
-};
-EOF
+    echo "API_BASE_URL=$backend_url" > .env
     
     if [ $? -eq 0 ]; then
         print_success "✅ .env criado"
@@ -1180,24 +1179,14 @@ EOF
         # Fazer backup
         cp "$config_file" "${config_file}.backup" 2>/dev/null || true
         
-        # Atualizar BASE_URL no ApiConfig.ts (método automático)
-        sed -i "s|BASE_URL: Constants.expoConfig?.extra?.API_URL|BASE_URL: '$backend_url'|g" "$config_file"
+        # Substituir qualquer BASE_URL existente
+        sed -i "s|BASE_URL: '[^']*'|BASE_URL: '$backend_url'|g" "$config_file"
         
-        # Verificar se a mudança foi feita
         if grep -q "$backend_url" "$config_file"; then
             print_success "✅ ApiConfig.ts atualizado para: $backend_url"
         else
-            print_warning "⚠️  Tentando método alternativo..."
-            # Método alternativo: substituir qualquer BASE_URL
-            sed -i "s|BASE_URL: '[^']*'|BASE_URL: '$backend_url'|g" "$config_file"
-            if grep -q "$backend_url" "$config_file"; then
-                print_success "✅ ApiConfig.ts atualizado (método alternativo)"
-            else
-                print_error "❌ Falha ao atualizar ApiConfig.ts"
-                # Restaurar backup
-                mv "${config_file}.backup" "$config_file" 2>/dev/null || true
-                return 1
-            fi
+            print_error "❌ Falha ao atualizar ApiConfig.ts"
+            return 1
         fi
     else
         print_error "❌ ApiConfig.ts não encontrado em $config_file"
@@ -1237,18 +1226,19 @@ cleanup_on_exit() {
     unset IOTRAC_LLM_KEY
     unset IOTRAC_LLM_ENABLED
     
-    # 2. LIMPAR .env DO BACKEND (SEGURANÇA CRÍTICA)
+    # 2. LIMPAR .env DO BACKEND (OPCIONAL - DESABILITADO POR PADRÃO)
     local backend_env="../iotrac-backend/config/.env"
     if [ -f "$backend_env" ]; then
-        print_status "🔐 Limpando credenciais do .env do backend..."
-        
-        # Restaurar valores padrão (sem informação sensível)
-        sed -i 's|^EMAIL_USER=.*|EMAIL_USER=seu_email@gmail.com|' "$backend_env" 2>/dev/null || true
-        sed -i 's|^EMAIL_PASSWORD=.*|EMAIL_PASSWORD=sua_senha_de_app_gmail|' "$backend_env" 2>/dev/null || true
-        sed -i 's|^EMAIL_FROM=.*|EMAIL_FROM=IOTRAC <seu_email@gmail.com>|' "$backend_env" 2>/dev/null || true
-        sed -i 's|^LLM_API_KEY=.*|LLM_API_KEY=sua_chave_llm_aqui|' "$backend_env" 2>/dev/null || true
-        
-        print_success "✅ Credenciais removidas do .env (segurança garantida)"
+        if [ "${IOTRAC_SECURE_CLEANUP}" = "true" ]; then
+            print_status "🔐 Limpando credenciais do .env do backend..."
+            sed -i 's|^EMAIL_USER=.*|EMAIL_USER=seu_email@gmail.com|' "$backend_env" 2>/dev/null || true
+            sed -i 's|^EMAIL_PASSWORD=.*|EMAIL_PASSWORD=sua_senha_de_app_gmail|' "$backend_env" 2>/dev/null || true
+            sed -i 's|^EMAIL_FROM=.*|EMAIL_FROM=IOTRAC <seu_email@gmail.com>|' "$backend_env" 2>/dev/null || true
+            sed -i 's|^LLM_API_KEY=.*|LLM_API_KEY=sua_chave_llm_aqui|' "$backend_env" 2>/dev/null || true
+            print_success "✅ Credenciais removidas do .env (segurança garantida)"
+        else
+            print_status "ℹ️  Limpeza de .env do backend pulada (IOTRAC_SECURE_CLEANUP!=true)"
+        fi
     fi
     
     # 3. REMOVER BACKUPS COM CREDENCIAIS
@@ -1257,13 +1247,16 @@ cleanup_on_exit() {
     # 4. REMOVER ARQUIVO TEMPORÁRIO DE LLM
     rm -f "/tmp/.iotrac_llm_temp_key" 2>/dev/null || true
     
-    print_success "✅ Limpeza completa concluída - Nenhuma credencial persistente"
+    print_success "✅ Limpeza completa concluída"
 }
 
 # Função principal
 main() {
     # Registrar limpeza automática ao sair (TODAS AS SITUAÇÕES)
     trap cleanup_on_exit EXIT SIGINT SIGTERM SIGQUIT SIGHUP
+    
+    # Resolver Python antes de tudo
+    resolve_python
     
     # ETAPA 1: Validação segura de credenciais (NOVA!)
     secure_credential_validation
@@ -1281,15 +1274,13 @@ main() {
     # Verificar dependências do sistema
     check_system_dependencies
     
-    # ETAPA 3: Configurações automáticas
-    # Detectar IP automaticamente (MELHORADO!)
-    configure_network_ip
-    
-    # Configurar .env do backend com credenciais (NOVO!)
+    # ETAPA 3: Configurações automáticas (ORDEM AJUSTADA)
+    # 1) Configurar .env do backend com credenciais
     configure_backend_env
-    
-    # Verificar e configurar chaves AES
+    # 2) Verificar e configurar chaves AES
     setup_aes_keys
+    # 3) Detectar IP e configurar frontend
+    configure_network_ip
     
     # ETAPA 4: Inicialização
     # Limpar processos anteriores (MELHORADO!)
