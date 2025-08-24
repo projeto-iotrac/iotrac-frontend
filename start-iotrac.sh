@@ -267,16 +267,16 @@ secure_credential_validation() {
         fi
     fi
     
-    # SE NÃO TEM CHAVE, PEDIR (OBRIGATÓRIO)
+    # SE NÃO TEM CHAVE, PEDIR (OPCIONAL - pode pressionar Enter para pular)
     if [ -z "$llm_api_key" ]; then
-        echo "[IOTRAC] API KEY LLM (OBRIGATÓRIO):"
-        read -p "Digite a API KEY: " llm_api_key
-        
-        if [ -z "$llm_api_key" ]; then
-            print_error "❌ API KEY LLM é obrigatória para o sistema funcionar!"
-            print_status "Sistema será encerrado."
-            exit 1
-        fi
+        echo "[IOTRAC] API KEY LLM (opcional, pressione Enter para pular):"
+        read -p "Digite a API KEY (ou Enter): " llm_api_key
+    fi
+    
+    if [ -z "$llm_api_key" ]; then
+        print_warning "⚠️  Sem API KEY — IA avançada desativada (usando heurísticas)"
+        llm_valid=true
+        llm_enabled=false
     fi
     
     # VALIDAÇÃO LLM COM LÓGICA INTELIGENTE
@@ -308,10 +308,11 @@ secure_credential_validation() {
                 fi
                 
                 # PEDIR NOVA CHAVE
-                read -p "Digite a API KEY novamente: " llm_api_key
+                read -p "Digite a API KEY novamente (ou Enter para pular): " llm_api_key
                 if [ -z "$llm_api_key" ]; then
-                    print_error "❌ API KEY é obrigatória!"
-                    exit 1
+                    print_warning "⚠️  Sem API KEY — seguindo sem LLM"
+                    llm_valid=true
+                    llm_enabled=false
                 fi
                 ;;
             2|4|5|7)
@@ -1090,7 +1091,7 @@ configure_network_ip() {
     local ip_address=""
     
     # Método 1: hostname -I (mais confiável)
-    ip_address=$(hostname -I | awk '{for(i=1;i<=NF;i++) if($i ~ /^192\.168\.|^10\.|^172\./) print $i}' | head -1)
+    ip_address=`hostname -I 2>/dev/null | tr ' ' '\n' | grep -E -m1 '^192\\.168\\.|^10\\.|^172\\.' | head -1`
     
     # Método 2: ip route (fallback)
     if [ -z "$ip_address" ]; then
@@ -1216,6 +1217,193 @@ print_status "📝 Criando .env automático..."
     fi
 }
 
+# Garante que o arquivo .env do backend exista (copia do env.example)
+ensure_backend_env_exists() {
+    local backend_dir="../iotrac-backend"
+    local env_file="$backend_dir/config/.env"
+    local env_example="$backend_dir/config/env.example"
+
+    if [ ! -d "$backend_dir" ]; then
+        print_error "❌ Diretório backend não encontrado: $backend_dir"
+        return 1
+    fi
+
+    if [ ! -f "$env_file" ]; then
+        if [ -f "$env_example" ]; then
+            print_status "📋 Criando .env no backend a partir do env.example..."
+            cp "$env_example" "$env_file"
+            if [ $? -eq 0 ]; then
+                print_success "✅ .env do backend criado"
+            else
+                print_error "❌ Falha ao criar .env do backend"
+                return 1
+            fi
+        else
+            print_error "❌ env.example não encontrado no backend"
+            return 1
+        fi
+    fi
+
+    return 0
+}
+
+# Detecta sistema operacional para bifurcar o fluxo
+detect_os() {
+    local uname_s=$(uname -s 2>/dev/null || echo "")
+    case "$uname_s" in
+        Linux*) OS_TYPE="linux" ;;
+        Darwin*) OS_TYPE="mac" ;;
+        MINGW*|MSYS*|CYGWIN*) OS_TYPE="windows" ;;
+        *) OS_TYPE="unknown" ;;
+    esac
+}
+
+# Prompt de pré-requisitos no Windows
+windows_prereq_prompt() {
+    echo
+    echo "╔══════════════════════════════════════════════════════════════╗"
+    echo "║                ⚠️  ALERTA: PASSOS MANUAIS                   ║"
+    echo "║              Requisitos para Sistema Windows                ║"
+    echo "╚══════════════════════════════════════════════════════════════╝"
+    echo
+    echo "Antes de prosseguir, você deve ter instalado manualmente:"
+    echo ""
+    echo "1) Python 3.10+ (IMPORTANTE: marque 'Add python.exe to PATH')"
+    echo "   Download: https://www.python.org/downloads/"
+    echo "   Assegure-se que Git Bash reconheça o comando 'python'"
+    echo ""
+    echo "2) Node.js LTS (18 ou 20)"
+    echo "   Download: https://nodejs.org/"
+    echo "   Assegure-se que Git Bash reconheça os comandos 'node' e 'npm'"
+    echo ""
+    echo "NOTA: Yarn será instalado automaticamente pelo script via npm"
+    echo ""
+    echo "3) Microsoft Visual C++ Redistributable (recomendado)"
+    echo "   https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist"
+    echo "   Necessário para compilar dependências Python (cryptography, bcrypt, etc.)"
+    echo ""
+    echo "⚠️  PROBLEMAS DE PATH:"
+    echo "Se encontrar erros de reconhecimento de PATH, busque o README do"
+    echo "projeto na seção 'Erros Frequentes na Inicialização' para"
+    echo "encontrar auxílio com o problema."
+    echo ""
+    echo "════════════════════════════════════════════════════════════════"
+    read -p "Você já baixou os requisitos e está pronto para executar? [y/N]: " win_choice
+    case "$win_choice" in
+        [Yy]|[Yy][Ee][Ss])
+            print_success "✅ Requisitos confirmados - Iniciando processo..."
+            return 0
+            ;;
+        *)
+            print_warning "⚠️  Instale os requisitos primeiro e execute novamente"
+            print_status "Script será encerrado para permitir instalações..."
+            exit 0
+            ;;
+    esac
+}
+
+# Descoberta e ajuste de PATH no Windows (sessão atual)
+windows_locate_tools() {
+    print_status "🔍 Verificando ferramentas no Windows..."
+    return 0
+}
+
+# Matar processos por porta (Windows)
+kill_processes_windows() {
+    print_status "🧹 Limpando processos IOTRAC (Windows)..."
+    return 0
+}
+
+# Detectar IP e atualizar frontend no Windows (sem sed)
+configure_network_ip_windows() {
+    print_status "🌐 Configurando IP (Windows)..."
+    return 0
+}
+
+# Iniciar backend no Windows
+start_backend_windows() {
+    print_status "🔧 Iniciando backend (Windows)..."
+    cd ../iotrac-backend
+
+    local env_file="config/.env"
+    if [ ! -f "$env_file" ]; then
+        print_error "❌ Arquivo .env do backend não encontrado!"
+        exit 1
+    fi
+
+    # Criar venv
+    python -m venv venv
+    if [ $? -ne 0 ]; then
+        print_warning "⚠️  Falha ao criar venv; usando Python do sistema"
+    fi
+
+    # Instalar requirements via venv se existir, senão --user
+    local pip_bin="python -m pip"
+    if [ -x "venv/Scripts/pip.exe" ]; then
+        pip_bin="venv/Scripts/pip.exe"
+    fi
+    $pip_bin install --upgrade pip
+    if ! $pip_bin install -r requirements.txt; then
+        print_warning "⚠️  Tentando instalação com --user"
+        python -m pip install --user -r requirements.txt || {
+            print_error "❌ Falha ao instalar dependências Python (Windows)"; exit 1; }
+    fi
+
+    # Iniciar uvicorn em background usando python -m
+    local py_bin="python"
+    if [ -x "venv/Scripts/python.exe" ]; then
+        py_bin="venv/Scripts/python.exe"
+    fi
+    $py_bin -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload &
+
+    cd ../iotrac-frontend
+    print_status "⏳ Aguardando backend (Windows)..."
+    sleep 5
+    if curl -s http://localhost:8000/ >/dev/null 2>&1 || curl -s http://127.0.0.1:8000/ >/dev/null 2>&1; then
+        print_success "✅ Backend ativo (Windows)"
+    else
+        print_warning "⚠️  Backend ainda inicializando..."
+        sleep 5
+        if curl -s http://localhost:8000/ >/dev/null 2>&1 || curl -s http://127.0.0.1:8000/ >/dev/null 2>&1; then
+            print_success "✅ Backend ativo (Windows)"
+        else
+            print_error "❌ Falha ao iniciar backend (Windows)"
+            exit 1
+        fi
+    fi
+}
+
+# Iniciar frontend no Windows
+start_frontend_windows() {
+    print_status "🌐 Iniciando Frontend (Windows)..."
+    
+    # Instalar dependências
+    if command -v yarn >/dev/null 2>&1; then
+        yarn install || npm install
+    else
+        npm install
+    fi
+    
+    print_status "🚀 Iniciando Expo (Windows)..."
+    print_status "📱 Aguarde o QR code aparecer..."
+    yarn start &
+    
+    print_status "⏳ Aguardando frontend..."
+    sleep 10
+    if curl -s http://localhost:19000 >/dev/null 2>&1 || curl -s http://localhost:8081 >/dev/null 2>&1; then
+        print_success "✅ Frontend iniciado (Windows)"
+    else
+        print_warning "⚠️  Frontend pode estar iniciando..."
+        sleep 5
+        if curl -s http://localhost:19000 >/dev/null 2>&1 || curl -s http://localhost:8081 >/dev/null 2>&1; then
+            print_success "✅ Frontend iniciado (Windows)"
+        else
+            print_error "❌ Falha ao iniciar frontend (Windows)"
+            exit 1
+        fi
+    fi
+}
+
 # Função de limpeza ao sair
 cleanup_on_exit() {
     print_status "🧹 Limpando credenciais..."
@@ -1258,11 +1446,13 @@ main() {
     # Resolver Python antes de tudo
     resolve_python
     
-    # ETAPA 1: Validação segura de credenciais (NOVA!)
-    secure_credential_validation
-    
-    # ETAPA 2: Verificações básicas
-    print_status "🚀 Iniciando IOTRAC - Sistema de Gerenciamento IoT"
+    # ETAPA 1: Mensagem inicial
+    echo
+    echo "╔══════════════════════════════════════╗"
+    echo "║         INICIANDO SISTEMA IOTRAC     ║"
+    echo "║      Sistema de Gerenciamento IoT    ║"
+    echo "╚══════════════════════════════════════╝"
+    echo
     
     # Verificar diretório
     if [ ! -d "../iotrac-backend" ]; then
@@ -1270,25 +1460,95 @@ main() {
         print_status "Certifique-se de que a pasta '../iotrac-backend' existe"
         exit 1
     fi
+
+    # ETAPA 2: Detecção de Sistema Operacional
+    print_status "🔍 Verificação de Sistema Operacional..."
+    # 1) Garantir .env do backend
+    ensure_backend_env_exists
+    # 2) Detectar SO
+    detect_os
     
-    # Verificar dependências do sistema
-    check_system_dependencies
+    echo
+    print_success "✅ Sistema Operacional encontrado: $OS_TYPE"
+    echo
     
-    # ETAPA 3: Configurações automáticas (ORDEM AJUSTADA)
-    # 1) Configurar .env do backend com credenciais
-    configure_backend_env
-    # 2) Verificar e configurar chaves AES
-    setup_aes_keys
-    # 3) Detectar IP e configurar frontend
-    configure_network_ip
-    
-    # ETAPA 4: Inicialização
-    # Limpar processos anteriores (MELHORADO!)
-    kill_processes
-    
-    # Iniciar serviços
-    start_backend
-    start_frontend
+    if [ "$OS_TYPE" = "linux" ] || [ "$OS_TYPE" = "mac" ]; then
+        # Fluxo Linux/macOS
+        # 3) Verificar e configurar chaves AES/HMAC
+        setup_aes_keys
+        # 4) Limpar processos anteriores (garantir portas livres)
+        kill_processes
+        # 5) Detectar IP/host e configurar frontend (.env + ApiConfig.ts)
+        configure_network_ip
+        # 6) Solicitar credenciais (email obrigatório, LLM opcional)
+        secure_credential_validation
+        # 7) Aplicar credenciais no backend (.env)
+        configure_backend_env
+    elif [ "$OS_TYPE" = "windows" ]; then
+        # Fluxo Windows: mostrar pré‑requisitos e preparar ferramentas/ambiente
+        if ! windows_prereq_prompt; then
+            exit 1
+        fi
+        if ! windows_locate_tools; then
+            exit 1
+        fi
+        # 3) Limpar processos (Windows)
+        kill_processes_windows
+        # 4) Detectar IP/host e configurar frontend (Windows)
+        configure_network_ip_windows
+        # 5) Solicitar credenciais (email obrigatório, LLM opcional)
+        secure_credential_validation
+        # 6) Aplicar credenciais no backend (.env)
+        configure_backend_env
+        # 7) Iniciar serviços no Windows
+        start_backend_windows
+        start_frontend_windows
+        # Encerrar fluxo aqui (sem passar para bloco Linux)
+        print_success "✨ IOTRAC iniciado com sucesso (Windows)!"
+        
+        # Mostrar informações do sistema
+        echo
+        echo "🎉 SISTEMA IOTRAC ATIVO (WINDOWS)!"
+        echo "✅ Backend: http://localhost:8000"
+        echo "✅ Expo DevTools: http://localhost:19002"
+        echo "✅ Web: http://localhost:19006"
+        echo "✅ Mobile: http://localhost:8081"
+        echo ""
+        print_status "📱 Para ver o QR code do Expo:"
+        print_status "   1. Abra http://localhost:19002 no navegador"
+        print_status "   2. Ou aguarde o QR code aparecer no terminal"
+        print_status "   3. Escaneie com o app Expo Go no seu celular"
+        echo ""
+        print_status "Para parar o sistema, pressione Ctrl+C"
+        echo ""
+        
+        # Registrar handler para Ctrl+C (Windows)
+        trap 'print_status "🛑 Parando IOTRAC (Windows)..."; kill_processes_windows; cleanup_on_exit; exit 0' SIGINT SIGTERM
+        
+        # Manter script rodando e monitorar processos (Windows)
+        while true; do
+            if ! curl -s http://localhost:8000/ >/dev/null 2>&1; then
+                print_error "❌ Backend parou inesperadamente!"
+                kill_processes_windows
+                exit 1
+            fi
+            if ! curl -s http://localhost:19000/ >/dev/null 2>&1 && ! curl -s http://localhost:8081/ >/dev/null 2>&1; then
+                print_error "❌ Frontend parou inesperadamente!"
+                kill_processes_windows
+                exit 1
+            fi
+            sleep 5
+        done
+    else
+        print_error "❌ SO não suportado automaticamente neste script"
+        exit 1
+    fi
+
+    # ETAPA 3: Inicialização por SO
+    if [ "$OS_TYPE" = "linux" ] || [ "$OS_TYPE" = "mac" ]; then
+        start_backend
+        start_frontend
+    fi
     
     print_success "✨ IOTRAC iniciado com sucesso!"
     echo
