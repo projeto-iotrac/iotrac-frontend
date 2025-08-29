@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuth } from '../src/contexts/AuthContext';

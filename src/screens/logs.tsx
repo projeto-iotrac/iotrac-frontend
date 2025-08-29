@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { apiService, LogEntry } from '../services/api';
 import Colors from '../constants/Colors';
-import StandardHeader from '../components/StandardHeader';
+import Header from '../components/Header';
 import { Link } from 'expo-router';
 
 export default function LogsScreen({ navigation }: any) {
@@ -102,7 +102,7 @@ export default function LogsScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       {/* Header padrão com barra azul e logo IOTRAC */}
-      <StandardHeader title="Logs do Sistema" />
+      <Header />
       <View style={{ paddingHorizontal: 16, paddingVertical: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' }}>
         <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000' }}>Logs do Sistema</Text>
       </View>

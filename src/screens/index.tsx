@@ -7,6 +7,7 @@ import Colors from "../constants/Colors";
 import { useDevices } from "../hooks/useApi";
 import Banner from "../components/Banner";
 import { useFocusEffect } from "@react-navigation/native";
+import Layout from "../components/Layout";
 
 export default function Index() {
   const { devices, loading, error, refreshDevices, removeDevice } = useDevices();
@@ -87,25 +88,7 @@ export default function Index() {
   );
 
   const ListHeaderComponent = () => (
-    <>
-      {/* Barra azul no topo com logo à esquerda - SEM PADDING HORIZONTAL */}
-      <View style={{ 
-        backgroundColor: Colors.primary, 
-        paddingVertical: 12,
-        alignItems: 'flex-start'
-      }}>
-        <View style={{ paddingLeft: 16 }}>
-          <Image 
-            source={require("../../assets/images/logo-2.png")} 
-            style={{ width: 200, height: 50, resizeMode: 'contain' }} 
-          />
-        </View>
-      </View>
-
-      {/* Banner com imagem e fade */}
-      <Banner source={require("../../assets/images/banner.png")} />
-
-      {/* Dispositivos SEM PADDING HORIZONTAL para preencher toda a largura */}
+    <Layout>
       <View style={{ paddingTop: 16 }}>
         <DevicesMenu />
       </View>
@@ -132,7 +115,7 @@ export default function Index() {
           </Text>
         </View>
       )}
-    </>
+    </Layout>
   );
 
   if (loading && !refreshing) {

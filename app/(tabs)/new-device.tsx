@@ -7,7 +7,7 @@ import { DEVICE_TYPES } from "../../src/constants/ApiConfig";
 import { useRouter } from "expo-router";
 import Button from "../../src/components/Button";
 import Toast from 'react-native-toast-message';
-import StandardHeader from "../../src/components/StandardHeader";
+import Header from "../../src/components/Header";
 
 export default function NewDevice() {
 	const [selectedDeviceType, setSelectedDeviceType] = useState("");
@@ -58,7 +58,7 @@ export default function NewDevice() {
 
 	return (
 		<View style={{ flex: 1 }}>
-			<StandardHeader />
+			<Header />
 			<ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
 				<Text style={styles.title}>Vincular Dispositivo</Text>
 

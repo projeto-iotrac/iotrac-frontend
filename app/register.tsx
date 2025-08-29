@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../src/contexts/AuthContext';
 

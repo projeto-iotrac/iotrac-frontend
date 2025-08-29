@@ -1,6 +1,6 @@
 import Dropdown from "../src/components/Dropdown";
-import React, { useState } from "react";
-import { Text, View, TextInput, ScrollView, ActivityIndicator, StyleSheet } from "react-native";
+import { useState } from "react";
+import { Text, View, TextInput, ScrollView, StyleSheet } from "react-native";
 import Colors from "../src/constants/Colors";
 import { apiService } from "../src/services/api";
 import { DEVICE_TYPES } from "../src/constants/ApiConfig";

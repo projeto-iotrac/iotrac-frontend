@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Colors from '../constants/Colors';
-import StandardHeader from '../components/StandardHeader';
+import Header from '../components/Header';
 import { API_CONFIG } from '../constants/ApiConfig';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -215,7 +214,7 @@ Como posso ajudá-lo a configurar ou entender melhor alguma dessas proteções? 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       {/* Header padrão com barra azul e logo IOTRAC (sem título colorido) */}
-      <StandardHeader />
+      <Header />
       {/* Título neutro e cru abaixo do header */}
       <View style={{ paddingHorizontal: 16, paddingVertical: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' }}>
         <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000' }}>Argos Bot</Text>
