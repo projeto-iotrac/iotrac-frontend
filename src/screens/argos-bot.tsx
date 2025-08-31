@@ -213,9 +213,6 @@ Como posso ajudá-lo a configurar ou entender melhor alguma dessas proteções? 
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Header padrão com barra azul e logo IOTRAC (sem título colorido) */}
-      <Header />
-      {/* Título neutro e cru abaixo do header */}
       <View style={{ paddingHorizontal: 16, paddingVertical: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' }}>
         <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000' }}>Argos Bot</Text>
       </View>

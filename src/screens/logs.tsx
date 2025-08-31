@@ -101,8 +101,6 @@ export default function LogsScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      {/* Header padrão com barra azul e logo IOTRAC */}
-      <Header />
       <View style={{ paddingHorizontal: 16, paddingVertical: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' }}>
         <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000' }}>Logs do Sistema</Text>
       </View>

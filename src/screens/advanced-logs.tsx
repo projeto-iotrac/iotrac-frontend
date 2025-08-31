@@ -20,7 +20,7 @@ export default function AdvancedLogsScreen({ navigation }: any) {
   const [filter, setFilter] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     loadLogs();
