@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
+import theme from "../theme";
 
 // ToDo: deixar nome do usuário dinâmico
 export default function Header({ name = "Natali" }) {
@@ -23,7 +24,7 @@ export default function Header({ name = "Natali" }) {
         </View>
       </View>
 
-      {route.path === "/home" && (
+      {route.name === "index" && (
         <Text style={styles.greeting}>Olá, {name}!</Text>
       )}
     </View>
@@ -32,7 +33,7 @@ export default function Header({ name = "Natali" }) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#02003B",
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 20,
     flexDirection: "column",
