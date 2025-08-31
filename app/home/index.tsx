@@ -5,7 +5,6 @@ import { useEffect, useState, useCallback } from "react";
 import { apiService, Device as DeviceData, ProtectionStatus } from "../../src/services/api";
 import { useDevices } from "../../src/hooks/useApi";
 import { useFocusEffect } from "@react-navigation/native";
-import Layout from "../../src/components/Layout";
 
 export default function Index() {
   const { devices, loading, error, refreshDevices, removeDevice } = useDevices();
@@ -86,7 +85,7 @@ export default function Index() {
   );
 
   const ListHeaderComponent = () => (
-    <Layout>
+    <>
       <View style={{ paddingTop: 16 }}>
         <DevicesMenu />
       </View>
@@ -113,7 +112,7 @@ export default function Index() {
           </Text>
         </View>
       )}
-    </Layout>
+    </>
   );
 
   if (loading && !refreshing) {

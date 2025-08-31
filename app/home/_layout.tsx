@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { TouchableOpacity } from "react-native";
-import Colors from "../../src/constants/Colors";
+import theme from "@/src/theme";
+import Header from "@/src/components/Header";
 
 const CustomTabButton = (props: any) => {
   const filteredProps = Object.fromEntries(Object.entries(props).filter(([_, v]) => v !== null));
@@ -29,17 +30,15 @@ export default function HomeTabsLayout() {
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.secondary,
-        headerShown: false,
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: "gray",
+        headerShown: true,
+        header: () => <Header />
       })}
     >
-      {/* Ordem: Logs (esquerda), Início (centro), Argos Bot (direita) */}
       <Tabs.Screen name="logs" options={{ title: "Logs do Sistema" }} />
       <Tabs.Screen name="index" options={{ title: "Início" }} />
       <Tabs.Screen name="argos-bot" options={{ title: "Argos Bot" }} />
-
-      {/* Rotas que não devem aparecer como abas */}
       <Tabs.Screen name="device-details" options={{ href: null }} />
       <Tabs.Screen name="new-device" options={{ href: null }} />
     </Tabs>
