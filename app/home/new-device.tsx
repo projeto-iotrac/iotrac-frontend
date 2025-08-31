@@ -1,1 +1,1 @@
-export { default } from "../(tabs)/new-device"; 
+export { default } from "../new-device"; 
