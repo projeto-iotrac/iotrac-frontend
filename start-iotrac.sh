@@ -48,7 +48,7 @@ validate_email_smtp() {
     print_status "Testando SMTP..."
     
     # ENVIAR EMAIL REAL para validação (não apenas testar login)
-    "$PYTHON_BIN" -c "
+    /c/Python313/python -c "
 import smtplib
 import ssl
 import sys
@@ -109,7 +109,7 @@ except (smtplib.SMTPConnectError, socket.timeout, socket.error):
 except Exception as e:
     print(f'ERROR: {str(e)}')
     sys.exit(3)
-" 2>/dev/null
+"
 }
 
 # Função para validar LLM API key com Together AI
@@ -1386,7 +1386,7 @@ start_frontend_windows() {
     
     print_status "🚀 Iniciando Expo (Windows)..."
     print_status "📱 Aguarde o QR code aparecer..."
-    yarn start &
+    npm start &
     
     print_status "⏳ Aguardando frontend..."
     sleep 10
