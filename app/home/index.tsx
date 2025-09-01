@@ -1,6 +1,6 @@
 import Device from "../../src/components/Device";
 import DevicesMenu from "../../src/components/DevicesMenu";
-import { View, Text, FlatList, RefreshControl, Image } from "react-native";
+import { View, Text, FlatList, RefreshControl, StyleSheet } from "react-native";
 import { useEffect, useState, useCallback } from "react";
 import { apiService, Device as DeviceData, ProtectionStatus } from "../../src/services/api";
 import { useDevices } from "../../src/hooks/useApi";
@@ -48,7 +48,6 @@ export default function Index() {
 
   useFocusEffect(
     useCallback(() => {
-      // Ao voltar para Home, atualiza a lista imediatamente
       refreshDevices();
       loadProtectionStatus(false);
       return undefined;
@@ -86,27 +85,19 @@ export default function Index() {
 
   const ListHeaderComponent = () => (
     <>
-      <View style={{ paddingTop: 16 }}>
-        <DevicesMenu />
-      </View>
+      <DevicesMenu />
 
       {error && (
-        <View style={{ 
-          backgroundColor: '#ffebee', 
-          padding: 16, 
-          borderRadius: 8, 
-          marginBottom: 16,
-          marginHorizontal: 16,
-        }}>
-          <Text style={{ color: '#c62828', textAlign: 'center' }}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>
             {error}
           </Text>
         </View>
       )}
 
       {devices.length === 0 && !loading && !error && (
-        <View style={{ padding: 40, alignItems: 'center' }}>
-          <Text style={{ fontSize: 16, color: '#666', textAlign: 'center' }}>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>
             Nenhum dispositivo encontrado.{"\n"}
             Adicione um dispositivo para começar.
           </Text>
@@ -117,8 +108,8 @@ export default function Index() {
 
   if (loading && !refreshing) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ fontSize: 16 }}>
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>
           Carregando dispositivos...
         </Text>
       </View>
@@ -126,12 +117,12 @@ export default function Index() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <FlatList
         data={devices}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ paddingBottom: 16 }}
+        contentContainerStyle={styles.listContent}
         ListHeaderComponent={ListHeaderComponent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -140,3 +131,41 @@ export default function Index() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  errorContainer: {
+    backgroundColor: '#ffebee',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+    marginHorizontal: 16,
+  },
+  errorText: {
+    color: '#c62828',
+    textAlign: 'center'
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: 'center'
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center'
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  loadingText: {
+    fontSize: 16
+  },
+  listContent: {
+    paddingBottom: 16
+  }
+});

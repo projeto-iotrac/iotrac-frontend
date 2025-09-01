@@ -5,6 +5,7 @@ import { apiService } from "../../src/services/api";
 import Colors from "../../src/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import Button from './Button';
+import theme from '../theme';
 import { useAuth } from "../contexts/AuthContext";
 
 interface DeviceProps {
@@ -122,18 +123,12 @@ const Device: React.FC<DeviceProps> = ({ title, subtitle, href, deviceId, protec
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.neutralBackground,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    borderWidth: 1,
+    borderColor: theme.colors.neutralBorder,
   },
   content: {
     flexDirection: 'row',
