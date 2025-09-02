@@ -3,22 +3,44 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'reac
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 import theme from '../../src/theme';
+import { ActivityIndicator, Modal } from 'react-native';
 
 export default function LoginScreen() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [emailError, setEmailError] = useState<string | null>(null);
+    const [passwordError, setPasswordError] = useState<string | null>(null);
     const { login } = useAuth();
+    const [error, setError] = useState<string | null>(null);
+
+    const handleEmailChange = (text: string) => {
+        setEmail(text);
+        if (emailError) setEmailError(null);
+    };
+
+    const handlePasswordChange = (text: string) => {
+        setPassword(text);
+        if (passwordError) setPasswordError(null);
+    };
 
     const handleLogin = async () => {
         setError(null);
+
         if (!email || !password) {
-            setError('Preencha email e senha');
+            if (!email) {
+                setEmailError('Preencha este campo!');
+            }
+
+            if (!password) {
+                setPasswordError('Preencha este campo!');
+            }
             return;
         }
+
         setLoading(true);
+
         try {
             const result = await login(email, password);
             if (result.success) {
@@ -33,7 +55,7 @@ export default function LoginScreen() {
                 setError(result.message);
             }
         } catch {
-            setError('Falha ao entrar');
+            setError('Ocorreu um erro ao autenticar o usuário. Tente novamente mais tarde!');
         } finally {
             setLoading(false);
         }
@@ -41,47 +63,60 @@ export default function LoginScreen() {
 
     return (
         <View style={styles.container}>
-            {!!error && <Text style={styles.errorText}>{error}</Text>}
-
             <Image source={require('../../assets/images/logo.svg')} style={styles.logo} />
 
+            {error && <Text style={styles.errorAlert}>{error}</Text>}
+
             <View>
-                <Text>E-mail</Text>
+                <Text style={styles.label}>E-mail*</Text>
                 <TextInput
                     value={email}
-                    onChangeText={setEmail}
+                    onChangeText={handleEmailChange}
                     autoCapitalize="none"
                     keyboardType="email-address"
                     style={styles.input}
                     placeholder="seuemail@email.com"
                     placeholderTextColor={theme.colors.textSecondary}
+                    maxLength={254}
                 />
+                {!!emailError && <Text style={styles.errorText}>{emailError}</Text>}
             </View>
 
             <View>
-                <Text>Senha</Text>
+                <Text style={styles.label}>Senha*</Text>
                 <TextInput
                     value={password}
-                    onChangeText={setPassword}
+                    onChangeText={handlePasswordChange}
                     secureTextEntry
                     style={styles.input}
                     placeholder="Su@S3nh@"
                     placeholderTextColor={theme.colors.textSecondary}
+                    maxLength={50}
                 />
+                {!!passwordError && <Text style={styles.errorText}>{passwordError}</Text>}
             </View>
 
-            <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
-                <Text style={styles.buttonText}>{loading ? 'Entrando...' : 'Entrar'}</Text>
+            <TouchableOpacity onPress={handleLogin} style={styles.loginButton} disabled={loading}>
+                <Text style={styles.buttonText}>Entrar</Text>
             </TouchableOpacity>
 
             <View style={styles.divider} />
 
             <View style={styles.registerContainer}>
                 <Text style={styles.textSecondary}>Ainda não tem uma conta?</Text>
-                <TouchableOpacity onPress={() => router.push('/register')}>
+                <TouchableOpacity onPress={() => router.push('/register')} disabled={loading}>
                     <Text style={styles.link}>Cadastre-se</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* Overlay de carregamento */}
+            {loading && (
+                <Modal transparent animationType="fade">
+                    <View style={styles.overlay}>
+                        <ActivityIndicator size="large" color={theme.colors.primary} />
+                    </View>
+                </Modal>
+            )}
         </View>
     );
 }
@@ -95,7 +130,7 @@ const styles = StyleSheet.create({
     },
     logo: {
         width: 80,
-        height: 80, 
+        height: 80,
         marginBottom: 16,
         alignSelf: 'center'
     },
@@ -104,22 +139,37 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     errorText: {
-        color: 'red',
-        marginBottom: 12,
+       fontSize: 12,
+       color: '#ff4036'
+    },
+    errorAlert: {
+       paddingHorizontal: 16, 
+       paddingVertical: 12,
+       borderWidth: 1,
+       borderRadius: 8, 
+       backgroundColor: '#fd463c14',
+       borderColor: '#ff4036',
+       color: '#ff4036',
     },
     input: {
         borderWidth: 1,
         borderColor: theme.colors.neutralBorder,
-        borderRadius: 32,
+        borderRadius: 8,
         height: 38,
         paddingHorizontal: 12,
         paddingVertical: 8,
         backgroundColor: theme.colors.neutralBackground,
     },
+    label: {
+        fontWeight: '500',
+        marginBottom: 4,
+        color: theme.colors.primary
+    },
     loginButton: {
         backgroundColor: theme.colors.primary,
         alignItems: 'center',
-        borderRadius: 32,
+        borderRadius: 8,
+        marginTop: 4,
     },
     buttonText: {
         color: '#fff',
@@ -135,7 +185,8 @@ const styles = StyleSheet.create({
     },
     divider: {
         borderTopColor: theme.colors.neutralBorder,
-        width: '100%',
+        width: '70%',
+        alignSelf: 'center',
         marginBottom: 0,
         marginTop: 4, borderBottomColor: theme.colors.neutralBorder,
         borderBottomWidth: StyleSheet.hairlineWidth,
@@ -147,5 +198,11 @@ const styles = StyleSheet.create({
     },
     textSecondary: {
         color: theme.colors.textSecondary,
+    },
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
