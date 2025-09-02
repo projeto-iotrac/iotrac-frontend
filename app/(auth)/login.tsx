@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 import theme from '../../src/theme';
@@ -62,7 +62,7 @@ export default function LoginScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.container}>
             <Image source={require('../../assets/images/logo.svg')} style={styles.logo} />
 
             {error && <Text style={styles.errorAlert}>{error}</Text>}
@@ -109,7 +109,6 @@ export default function LoginScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* Overlay de carregamento */}
             {loading && (
                 <Modal transparent animationType="fade">
                     <View style={styles.overlay}>
@@ -117,7 +116,7 @@ export default function LoginScreen() {
                     </View>
                 </Modal>
             )}
-        </View>
+        </ScrollView>
     );
 }
 
@@ -126,30 +125,26 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 16,
         justifyContent: 'center',
+        flexGrow: 1,
         gap: 16
     },
     logo: {
         width: 80,
         height: 80,
-        marginBottom: 16,
         alignSelf: 'center'
-    },
-    title: {
-        fontSize: 20,
-        marginBottom: 16,
     },
     errorText: {
        fontSize: 12,
-       color: '#ff4036'
+       color: theme.colors.error,
     },
     errorAlert: {
        paddingHorizontal: 16, 
        paddingVertical: 12,
        borderWidth: 1,
        borderRadius: 8, 
-       backgroundColor: '#fd463c14',
-       borderColor: '#ff4036',
-       color: '#ff4036',
+       backgroundColor: theme.colors.errorOpacity,
+       borderColor: theme.colors.error,
+       color: theme.colors.error,
     },
     input: {
         borderWidth: 1,
