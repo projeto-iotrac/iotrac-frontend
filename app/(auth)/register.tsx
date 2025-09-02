@@ -89,6 +89,8 @@ export default function RegisterScreen() {
                     value={fullName}
                     onChangeText={text => { setFullName(text); if (fullNameError) setFullNameError(null); }}
                     maxLength={200}
+                    placeholder='Seu Nome Completo'
+                    placeholderTextColor={theme.colors.textSecondary}
                 />
                 {!!fullNameError && <Text style={styles.errorText}>{fullNameError}</Text>}
             </View>
@@ -102,6 +104,8 @@ export default function RegisterScreen() {
                     autoCapitalize="none"
                     keyboardType="email-address"
                     maxLength={254}
+                    placeholder='seuemail@email.com'
+                    placeholderTextColor={theme.colors.textSecondary}
                 />
                 {!!emailError && <Text style={styles.errorText}>{emailError}</Text>}
             </View>
@@ -114,6 +118,8 @@ export default function RegisterScreen() {
                     onChangeText={text => { setPassword(text); if (passwordError) setPasswordError(null); }}
                     secureTextEntry
                     maxLength={50}
+                    placeholder='Su@S3nh@'
+                    placeholderTextColor={theme.colors.textSecondary}
                 />
                 {!!passwordError && <Text style={styles.errorText}>{passwordError}</Text>}
                 <Text style={styles.passwordTip}>{passwordTip}</Text>
@@ -127,6 +133,8 @@ export default function RegisterScreen() {
                     onChangeText={text => { setConfirmPassword(text); if (confirmPasswordError) setConfirmPasswordError(null); }}
                     secureTextEntry
                     maxLength={50}
+                    placeholder='Su@S3nh@'
+                    placeholderTextColor={theme.colors.textSecondary}
                 />
                 {!!confirmPasswordError && <Text style={styles.errorText}>{confirmPasswordError}</Text>}
             </View>
