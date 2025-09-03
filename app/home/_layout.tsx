@@ -45,8 +45,9 @@ export default function Layout() {
           tabBarActiveTintColor: theme.colors.primary,
           tabBarInactiveTintColor: "gray",
           tabBarStyle: {
-            backgroundColor: 'white',
+            backgroundColor: theme.colors.neutralBackground,
             zIndex: 1,
+            borderTopColor: theme.colors.neutralBorder,
           },
             headerShown: true,
           header: () => <Header />,

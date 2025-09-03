@@ -21,13 +21,3 @@ export default function AuthLayout() {
     </ThemeProvider>
   );
 } 
-
-const styles = StyleSheet.create({
-  version: {
-    position: 'absolute',
-    bottom: 10,
-    alignSelf: 'center',
-    color: theme.colors.textSecondary,
-    fontSize: 12,
-  },
-});
