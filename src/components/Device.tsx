@@ -124,7 +124,7 @@ const Device: React.FC<DeviceProps> = ({ title, subtitle, href, deviceId, protec
 const styles = StyleSheet.create({
   container: {
     backgroundColor: theme.colors.neutralBackground,
-    borderRadius: 16,
+    borderRadius: 8,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
