@@ -131,7 +131,8 @@ const styles = StyleSheet.create({
     logo: {
         width: 80,
         height: 80,
-        alignSelf: 'center'
+        alignSelf: 'center',
+        marginBottom: 24
     },
     errorText: {
        fontSize: 12,

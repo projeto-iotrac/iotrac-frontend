@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { AuthProvider } from "@/src/contexts/AuthContext";
-import { StyleSheet } from "react-native";
+import { Text, StyleSheet } from "react-native";
 import theme from "@/src/theme";
 
 const defaultTheme = {
@@ -17,6 +17,8 @@ export default function AuthLayout() {
     <ThemeProvider value={defaultTheme}>
       <AuthProvider>
         <Stack screenOptions={{ headerShown: false }} />
+        {/* ToDo: deixar versão do release dinâmica */}
+        <Text style={styles.version}>v1.0.0</Text>
       </AuthProvider>
     </ThemeProvider>
   );

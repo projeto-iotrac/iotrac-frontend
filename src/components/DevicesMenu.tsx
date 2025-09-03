@@ -23,8 +23,8 @@ const DevicesMenu = () => {
       <TouchableOpacity onPress={handleAddDevice} activeOpacity={0.7}>
         <Ionicons
           name="add"
-          size={22}
-          color={theme.colors.primary}
+          size={20}
+          color={"white"}
           style={styles.addIcon}
         />
       </TouchableOpacity>
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   addIcon: {
-    backgroundColor: theme.colors.primaryOpacity,
+    backgroundColor: theme.colors.primary,
     borderRadius: 16,
     width: 24,
     height: 24,
