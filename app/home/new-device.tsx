@@ -6,7 +6,6 @@ import { apiService } from "../../src/services/api";
 import { DEVICE_TYPES } from "../../src/constants/ApiConfig";
 import { useRouter } from "expo-router";
 import Button from "../../src/components/Button";
-import Toast from 'react-native-toast-message';
 import theme from "@/src/theme";
 
 export default function NewDevice() {
@@ -151,7 +150,8 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 18,
-        fontWeight: '600',
+        fontWeight: '500',
+        color: theme.colors.primary
     },
     input: {
         borderWidth: 1,

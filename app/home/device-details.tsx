@@ -1,11 +1,13 @@
 import Colors from "../../src/constants/Colors";
-import { ScrollView, Text, TouchableOpacity, View, Alert, ActivityIndicator } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View, Alert, ActivityIndicator, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { apiService, Device, ProtectionStatus } from "../../src/services/api";
 import { useDevices } from "../../src/hooks/useApi";
 import { useAuth } from "../../src/contexts/AuthContext";
+import theme from "@/src/theme";
+import { useNavigation } from "@react-navigation/native";
 
 export default function DeviceDetails() {
   const { id } = useLocalSearchParams();
@@ -15,7 +17,7 @@ export default function DeviceDetails() {
   const [sendingCommand, setSendingCommand] = useState(false);
   const { toggleDeviceProtection } = useDevices();
   const { user } = useAuth();
-
+  const navigation = useNavigation();
   const isOperator = user?.role === 'admin' || user?.role === 'device_operator';
 
   useEffect(() => {
@@ -67,7 +69,7 @@ export default function DeviceDetails() {
         timestamp: response.timestamp
       });
       Alert.alert(
-        "Sucesso", 
+        "Sucesso",
         response.message,
         [{ text: "OK" }]
       );
@@ -89,14 +91,14 @@ export default function DeviceDetails() {
       'smart-tv': 'Smart TV',
       'smart-thermostat': 'Termostato Inteligente'
     };
-    
+
     return typeMap[deviceType] || deviceType;
   };
 
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={{ marginTop: 16, fontSize: 16 }}>
           Carregando detalhes do dispositivo...
         </Text>
@@ -115,37 +117,37 @@ export default function DeviceDetails() {
   }
 
   return (
-    <ScrollView style={{ flex: 1, paddingHorizontal: 16 }}>
-      <Text style={{ fontSize: 20, fontWeight: '500', marginVertical: 16 }}>
-        Detalhes do Dispositivo
-      </Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <TouchableOpacity onPress={() => navigation.navigate('index' as never)}>
+          <Ionicons name="chevron-back-outline" size={18} color={theme.colors.primary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Detalhes do Dispositivo</Text>
+      </View>
 
-      <View style={{ 
-        backgroundColor: '#f5f5f5', 
-        padding: 16, 
-        borderRadius: 8, 
-        marginBottom: 16 
-      }}>
-        <Text style={{ marginBottom: 8, fontWeight: '600' }}>
-          Nome: {getDeviceTitle(device.device_type)}
+      <View>
+        <Text style={styles.deviceName}>{getDeviceTitle(device.device_type)}</Text>
+        {/* ToDo: adicionar cadastro de ambiente e deixar essa informação dinâmica */}
+        <Text style={styles.deviceEnvironment}>Sala de reuniões</Text>
+      </View>
+
+      <View>
+        <Text style={styles.deviceInfo}>Informações de segurança:</Text>
+        <Text style={styles.text}>
+          Status: {protectionStatus?.protection_enabled ? "Protegido" : "Vulnerável"}
         </Text>
-        <Text style={{ marginBottom: 8 }}>
-          Tipo: {device.device_type}
-        </Text>
-        <Text style={{ marginBottom: 8 }}>
-          IP: {device.ip_address}
-        </Text>
-        <Text style={{ marginBottom: 8 }}>
-          ID: {device.id}
-        </Text>
+      </View>
+
+      <View>
+        <Text style={styles.deviceInfo}>Informações gerais:</Text>
+        <Text style={styles.text}>IP: {device.ip_address}</Text>
+        <Text style={styles.text}>ID: {device.id}</Text>
         {device.registered_at && (
-          <Text style={{ marginBottom: 8 }}>
+          <Text style={styles.text}>
             Registrado em: {new Date(device.registered_at).toLocaleString()}
           </Text>
         )}
-        <Text style={{ marginBottom: 8 }}>
-          Status: {protectionStatus?.protection_enabled ? "Protegido" : "Vulnerável"}
-        </Text>
+        <Text style={styles.text}>Tipo: {device.device_type}</Text>
       </View>
 
       {/* Controle de Proteção - admins e operadores */}
@@ -159,7 +161,7 @@ export default function DeviceDetails() {
             onPress={handleToggleProtection}
             disabled={sendingCommand}
             style={{
-              backgroundColor: protectionStatus?.protection_enabled ? Colors.error : Colors.primary,
+              backgroundColor: protectionStatus?.protection_enabled ? Colors.error : theme.colors.primary,
               paddingVertical: 12,
               paddingHorizontal: 20,
               marginBottom: 32,
@@ -171,16 +173,16 @@ export default function DeviceDetails() {
               borderRadius: 8,
               opacity: sendingCommand ? 0.6 : 1,
             }}>
-            <Ionicons 
-              name={protectionStatus?.protection_enabled ? "alert-circle" : "shield"} 
-              size={20} 
-              style={{color: '#FFF'}} 
-            /> 
+            <Ionicons
+              name={protectionStatus?.protection_enabled ? "alert-circle" : "shield"}
+              size={20}
+              style={{ color: '#FFF' }}
+            />
             <Text style={{ color: '#FFF', fontWeight: 'bold' }}>
-              {sendingCommand 
-                ? "Processando..." 
-                : protectionStatus?.protection_enabled 
-                  ? "Desativar Proteção" 
+              {sendingCommand
+                ? "Processando..."
+                : protectionStatus?.protection_enabled
+                  ? "Desativar Proteção"
                   : "Ativar Proteção"
               }
             </Text>
@@ -191,3 +193,35 @@ export default function DeviceDetails() {
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    gap: 16,
+    flexGrow: 1
+  },
+  title: {
+    fontSize: 18,
+    color: theme.colors.primary
+  },
+  deviceName: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+    color: theme.colors.primary
+  },
+  deviceEnvironment: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+  },
+  deviceInfo: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.primary,
+    marginBottom: 6,
+  },
+  text: {
+    marginBottom: 4,
+  }
+});
