@@ -1,53 +1,77 @@
-import { StyleSheet, TouchableOpacity, Text } from "react-native";
+import React from "react";
+import { StyleSheet, TouchableOpacity, Text, useWindowDimensions, ViewStyle } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../constants/Colors';
+import theme from "../theme";
+
+type BtnClass =
+    | 'buttonPrimary'
+    | 'buttonSecondary'
+    | 'buttonDisabled'
+    | 'buttonDelete'
+    | 'buttonEnd';
 
 interface ButtonProps {
     text?: string;
-    btnClass?: 'buttonPrimary' | 'buttonSecondary' | 'buttonDisabled' | 'buttonDelete';
+    btnClass?: BtnClass | BtnClass[];
     icon?: keyof typeof Ionicons.glyphMap;
     onPress?: () => void;
     disabled?: boolean;
-};
+}
 
-const Button: React.FC<ButtonProps> = ({ text, icon, btnClass = "buttonPrimary", onPress, disabled }) => {
-    let iconColor = "#FFF";
-    let textColor = "#FFF";
-    
-    switch (btnClass) {
-        case "buttonDelete":
-            iconColor = Colors.error;
-            textColor = Colors.error;
-            break;
-        default:
-            break;
-    }
+const Button: React.FC<ButtonProps> = ({
+    text,
+    icon,
+    btnClass = "buttonPrimary",
+    onPress,
+    disabled,
+}) => {
+    const { width } = useWindowDimensions();
+
+    const btnClasses = Array.isArray(btnClass) ? btnClass : [btnClass];
+
+    const isDelete = btnClasses.includes("buttonDelete");
+    const iconColor = isDelete ? Colors.error : "#FFF";
+    const textColor = isDelete ? Colors.error : "#FFF";
+
+    const buttonStyles: (ViewStyle | undefined)[] = [
+        styles.button,
+        ...btnClasses.map(c => styles[c]),
+        disabled ? styles.buttonDisabled : undefined,
+        btnClasses.includes('buttonEnd') ? { width: width - 32 } : undefined,
+    ];
 
     return (
-        <TouchableOpacity onPress={onPress} disabled={disabled} style={[styles.button, styles[btnClass], disabled && styles.buttonDisabled]}>
+        <TouchableOpacity
+            onPress={onPress}
+            disabled={disabled}
+            style={buttonStyles}
+        >
             {icon && (
-                <Ionicons name={icon} style={[styles.buttonIcon, {color: iconColor }]} />
+                <Ionicons name={icon} style={[styles.buttonIcon, { color: iconColor }]} />
             )}
-
             {text && (
-                <Text style={[styles.buttonText, {color: iconColor }]}>{text}</Text>
+                <Text style={[styles.buttonText, { color: textColor }]}>{text}</Text>
             )}
         </TouchableOpacity>
     );
-}
+};
 
 const styles = StyleSheet.create({
     button: {
-        paddingVertical: 12,
-        paddingHorizontal: 20,
         alignItems: 'center',
         borderRadius: 8,
+        marginTop: 4,
+        gap: 8,
         flexDirection: 'row',
         justifyContent: 'center',
-        gap: 8,
+    },
+    buttonEnd: {
+        position: 'absolute',
+        bottom: 16,
     },
     buttonPrimary: {
-        backgroundColor: Colors.primary,
+        backgroundColor: theme.colors.primary,
     },
     buttonSecondary: {
         backgroundColor: Colors.primaryOpacity,
@@ -64,9 +88,11 @@ const styles = StyleSheet.create({
         minHeight: 44,
     },
     buttonText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontWeight: '700',
+        color: '#fff',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        height: 38,
+        lineHeight: 20,
     },
     buttonIcon: {
         color: '#FFF',

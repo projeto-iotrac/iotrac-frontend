@@ -9,6 +9,8 @@ const DevicesMenu = () => {
   const handleAddDevice = () => {
     try {
       console.log('🔄 Tentando navegar para /home/new-device');
+
+      // Usa push para criar uma nova instância da tela
       router.push("/home/new-device");
     } catch (error) {
       console.error('❌ Erro na navegação:', error);
