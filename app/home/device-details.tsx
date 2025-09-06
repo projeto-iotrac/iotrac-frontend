@@ -128,7 +128,7 @@ export default function DeviceDetails() {
       <View>
         <Text style={styles.deviceName}>{getDeviceTitle(device.device_type)}</Text>
         {/* ToDo: adicionar cadastro de ambiente e deixar essa informação dinâmica */}
-        <Text style={styles.deviceEnvironment}>Sala de reuniões</Text>
+        {/* <Text style={styles.deviceEnvironment}>Sala de reuniões</Text> */}
       </View>
 
       <View>
