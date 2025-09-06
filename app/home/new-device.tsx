@@ -92,7 +92,6 @@ export default function NewDevice() {
                         items={DEVICE_TYPES}
                         value={selectedDeviceType}
                         onSelect={handleSelectedDeviceChange}
-                        style={[error && { borderColor: Colors.error }]}
                     />
                     {deviceTypesError && <Text style={styles.errorText}>{deviceTypesError}</Text>}
                 </View>
