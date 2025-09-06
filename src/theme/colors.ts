@@ -7,6 +7,9 @@ const colors = {
   textSecondary: '#a9a9a9',
   error: '#ff4036',
   errorOpacity: '#fd463c14',
+  success: '#4BB543',
+  warning: '#ffcc00',
+  info: '#007bff',
 };
 
 export default colors;

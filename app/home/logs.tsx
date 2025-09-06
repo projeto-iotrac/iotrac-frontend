@@ -204,7 +204,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    color: theme.colors.primary
+    color: theme.colors.primary,
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,

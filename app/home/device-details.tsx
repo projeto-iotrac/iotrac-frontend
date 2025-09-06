@@ -203,12 +203,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    color: theme.colors.primary
+    color: theme.colors.primary,
+    fontWeight: '600',
   },
   deviceName: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 4,
     color: theme.colors.primary
   },
   deviceEnvironment: {
