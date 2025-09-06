@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect } from 'expo-router';
-import { apiService, LogEntry } from '../src/services/api';
-import Colors from '../src/constants/Colors';
-import { useAuth } from '../src/contexts/AuthContext';
+import { apiService, LogEntry } from '../../src/services/api';
+import Colors from '../../src/constants/Colors';
+import { useAuth } from '../../src/contexts/AuthContext';
 
 export default function AdvancedLogsScreen() {
   const { isAuthenticated, isLoading } = useAuth();

@@ -58,6 +58,7 @@ export default function Layout() {
         <Tabs.Screen name="argos-bot" options={{ title: "Argos Bot" }} />
         <Tabs.Screen name="device-details" options={{ href: null }} />
         <Tabs.Screen name="new-device" options={{ href: null }} />
+        <Tabs.Screen name="advanced-logs" options={{ href: null }} />
       </Tabs>
     </ThemeProvider>
   );

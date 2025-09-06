@@ -11,12 +11,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { apiService, LogEntry } from '../../src/services/api';
 import Colors from '../../src/constants/Colors';
-import { Link } from 'expo-router';
+import theme from '@/src/theme';
+import Button from '../../src/components/Button';
+import { useNavigation } from '@react-navigation/native';
 
-export default function LogsScreen({ navigation }: any) {
+export default function LogsScreen() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const navigation = useNavigation();
 
   useEffect(() => {
     loadLogs();
@@ -34,6 +37,9 @@ export default function LogsScreen({ navigation }: any) {
       setLoading(false);
     }
   };
+
+  const handleOpenAdvancedLogs = () => {
+ navigation.navigate('advanced-logs' as never)  }
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -85,7 +91,7 @@ export default function LogsScreen({ navigation }: any) {
       'smart-tv': 'Smart TV',
       'smart-thermostat': 'Termostato'
     };
-    
+
     return typeMap[deviceType] || deviceType;
   };
 
@@ -99,23 +105,16 @@ export default function LogsScreen({ navigation }: any) {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={{ paddingHorizontal: 16, paddingVertical: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000' }}>Logs do Sistema</Text>
-      </View>
-      
       <ScrollView
-        style={styles.scrollView}
+        contentContainerStyle={styles.container}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
+        <Text style={styles.title}>Logs do Sistema</Text>
+
         {/* Botão para Logs Avançados */}
-        <Link href="/(tabs)/advanced-logs" asChild>
-          <TouchableOpacity style={styles.advancedButtonRaw}>
-            <Text style={styles.advancedButtonRawText}>Abrir Logs Avançados</Text>
-          </TouchableOpacity>
-        </Link>
+        <Button text="Abrir Logs Avançados" btnClass={"buttonPrimary"} onPress={handleOpenAdvancedLogs}/>
 
         {/* Estatísticas Rápidas */}
         <View style={styles.statsContainer}>
@@ -139,7 +138,7 @@ export default function LogsScreen({ navigation }: any) {
 
         {/* Lista de Logs */}
         <Text style={styles.sectionTitle}>Logs Recentes</Text>
-        
+
         {logs.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="document-text-outline" size={48} color="#ccc" />
@@ -169,7 +168,7 @@ export default function LogsScreen({ navigation }: any) {
                   {formatTimestamp(log.timestamp)}
                 </Text>
               </View>
-              
+
               <View style={styles.logContent}>
                 <Text style={styles.logDevice}>
                   {getDeviceTypeLabel(log.device_type)} (ID: {log.device_id})
@@ -193,14 +192,19 @@ export default function LogsScreen({ navigation }: any) {
           </TouchableOpacity>
         )}
       </ScrollView>
-    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    padding: 16,
+    gap: 16,
+    flexGrow: 1
+  },
+  title: {
+    fontSize: 18,
+    color: theme.colors.primary
   },
   scrollView: {
     flex: 1,
@@ -241,18 +245,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     padding: 12,
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#d0d0d0',
+      borderRadius: 8,
+    borderColor: theme.colors.neutralBorder,
   },
   statItem: {
     alignItems: 'center',
+    width: '33%',
   },
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.primary,
+    color: theme.colors.primary,
   },
   statLabel: {
     fontSize: 12,
@@ -261,18 +265,15 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
+    color: theme.colors.primary,
     fontWeight: '600',
-    color: '#000',
-    margin: 16,
-    marginBottom: 8,
   },
   emptyContainer: {
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#fff',
-    margin: 16,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d0d0d0',
+    borderColor: theme.colors.neutralBorder,
   },
   emptyText: {
     fontSize: 16,
