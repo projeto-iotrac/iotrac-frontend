@@ -45,10 +45,15 @@ validate_email_smtp() {
     local email=$1
     local password=$2
     
+    # Garantir que Python está resolvido
+    if [ -z "$PYTHON_BIN" ]; then
+        resolve_python
+    fi
+    
     print_status "Testando SMTP..."
     
     # ENVIAR EMAIL REAL para validação (não apenas testar login)
-    /c/Python313/python -c "
+    "$PYTHON_BIN" -c "
 import smtplib
 import ssl
 import sys
