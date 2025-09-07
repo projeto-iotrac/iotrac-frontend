@@ -88,6 +88,7 @@ export default function Verify2FAScreen() {
           onChangeText={handleCodeChange}
           keyboardType="number-pad" 
           style={styles.input}
+          maxLength={6}
            placeholder='123456'
           placeholderTextColor={theme.colors.textSecondary} />
           {codeError && <Text style={styles.errorText}>{codeError}</Text>}
@@ -162,10 +163,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.neutralBorder,
     borderRadius: 8,
-    height: 38,
+    height: 44,
     paddingHorizontal: 12,
-    paddingVertical: 8,
     backgroundColor: theme.colors.neutralBackground,
+    fontSize: 16,
+    textAlign: 'center',
+    letterSpacing: 4
   },
   label: {
     fontWeight: '500',
