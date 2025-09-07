@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { API_CONFIG } from '../../src/constants/ApiConfig';
 import { useAuth } from '../../src/contexts/AuthContext';
+import theme from '@/src/theme';
 
 interface Message {
   id: string;
@@ -37,7 +38,7 @@ export default function ArgosBotScreen() {
       isUser: false,
       timestamp: new Date(),
     };
-    
+
     setMessages([welcomeMessage]);
   }, []);
 
@@ -74,7 +75,7 @@ export default function ArgosBotScreen() {
         body: JSON.stringify({ query: userMessage.text })
       });
       let data: any = {};
-      try { data = await resp.json(); } catch {}
+      try { data = await resp.json(); } catch { }
 
       let botText = '';
       if (resp.ok && data?.success && data?.response?.message) {
@@ -107,7 +108,7 @@ export default function ArgosBotScreen() {
 
   const generateBotResponse = (userInput: string): string => {
     const input = userInput.toLowerCase();
-    
+
     // Respostas específicas para as opções iniciais
     if (input.includes('funções') && input.includes('história') && input.includes('argos')) {
       return `🏛️ **Memória de Argos**
@@ -133,7 +134,7 @@ Aqui vão algumas das minhas funções principais na proteção do IOTRAC:
 
 **Lembre-se**: a segurança é uma parceria. Conte comigo para tornar seu mundo conectado mais protegido! 🛡️`;
     }
-    
+
     if (input.includes('sistema') && input.includes('proteção') && input.includes('iotrac')) {
       return `🛡️ **Sistema de Proteção IOTRAC**
 
@@ -176,27 +177,27 @@ Como posso ajudá-lo a configurar ou entender melhor alguma dessas proteções? 
     if (input.includes('status') || input.includes('dispositivos')) {
       return 'Monitorando todos os dispositivos conectados. Atualmente não há alertas críticos. Todos os sistemas estão operacionais e seguros.';
     }
-    
+
     if (input.includes('segurança') || input.includes('proteção')) {
       return 'Recomendo:\n- Manter todos os dispositivos atualizados\n- Usar senhas únicas e fortes\n- Ativar autenticação de dois fatores\n- Monitorar regularmente os logs de atividade\n\nPosso ajudar com configurações específicas?';
     }
-    
+
     if (input.includes('logs') || input.includes('atividade')) {
       return 'Analisando logs recentes... Encontrei:\n- 15 conexões normais nas últimas 24h\n- 2 tentativas de acesso bloqueadas\n- 0 anomalias críticas detectadas\n\nGostaria de ver detalhes específicos?';
     }
-    
+
     if (input.includes('anomalia') || input.includes('suspeito')) {
       return 'Sistema de detecção de anomalias ativo. Parâmetros monitorados:\n- Padrões de tráfego incomuns\n- Tentativas de acesso não autorizadas\n- Comandos fora do padrão normal\n- Horários atípicos de atividade\n\nTudo normal no momento.';
     }
-    
+
     if (input.includes('comandos') || input.includes('controle')) {
       return 'Posso ajudar com:\n- Ativar/desativar proteção de dispositivos\n- Bloquear dispositivos suspeitos\n- Gerar relatórios de segurança\n- Configurar alertas personalizados\n\nQual comando você gostaria de executar?';
     }
-    
+
     if (input.includes('ajuda') || input.includes('help')) {
       return 'Como Argos, posso ajudá-lo com:\n- Monitoramento de dispositivos IoT\n- Análise de segurança em tempo real\n- Detecção de anomalias\n- Configurações de proteção\n- Relatórios e logs detalhados\n\nO que você gostaria de saber?';
     }
-    
+
     // Resposta padrão atualizada (curta)
     return `Olá! Eu sou Argos, a inteligência artificial integrada ao aplicativo IOTRAC, projetado para elevar a segurança dos seus dispositivos IoT.\n\nAbaixo temos opções de perguntar para que possamos iniciar nossa sessão:\n\n🏛️ "Quero saber mais sobre as funções e a história do Argos."\n\n🛡️ "Quero entender como funciona o sistema de proteção do IOTRAC."`;
   };
@@ -211,43 +212,28 @@ Como posso ajudá-lo a configurar ou entender melhor alguma dessas proteções? 
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={{ paddingHorizontal: 16, paddingVertical: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000' }}>Argos Bot</Text>
-      </View>
-      
-      {/* Mensagens */}
       <ScrollView
         ref={scrollViewRef}
-        style={styles.messagesContainer}
+        style={styles.chatScroll}
         showsVerticalScrollIndicator={false}
       >
         {messages.map((message) => (
           <View
             key={message.id}
             style={[
-              styles.messageContainer,
-              message.isUser ? styles.userMessage : styles.botMessage,
+              styles.chatRow,
+              message.isUser ? styles.chatRowUser : styles.chatRowBot,
             ]}
           >
-            {!message.isUser && (
-              <View style={styles.botMessageAvatar} />
-            )}
-            
+            {!message.isUser && <View style={styles.avatar} />}
             <View
               style={[
-                styles.messageBubble,
-                message.isUser ? styles.userBubble : styles.botBubble,
+                styles.bubble,
+                message.isUser ? styles.bubbleUser : styles.bubbleBot,
               ]}
             >
-              <Text
-                style={[
-                  styles.messageText,
-                  message.isUser ? styles.userMessageText : styles.botMessageText,
-                ]}
-              >
-                {message.text}
-              </Text>
-              <Text style={styles.messageTime}>
+              <Text style={[styles.bubbleBotText, message.isUser ? styles.bubbleUserText : styles.bubbleBotText]}>{message.text}</Text>
+              <Text style={styles.bubbleTime}>
                 {message.timestamp.toLocaleTimeString('pt-BR', {
                   hour: '2-digit',
                   minute: '2-digit',
@@ -256,12 +242,12 @@ Como posso ajudá-lo a configurar ou entender melhor alguma dessas proteções? 
             </View>
           </View>
         ))}
-        
+
         {isTyping && (
-          <View style={styles.typingIndicator}>
-            <View style={styles.botMessageAvatar} />
+          <View style={styles.typingRow}>
+            <View style={styles.avatar} />
             <View style={styles.typingBubble}>
-              <ActivityIndicator size="small" color="#666" />
+              <ActivityIndicator size="small" color={theme.colors.textSecondary} />
               <Text style={styles.typingText}>Argos está digitando...</Text>
             </View>
           </View>
@@ -269,42 +255,42 @@ Como posso ajudá-lo a configurar ou entender melhor alguma dessas proteções? 
       </ScrollView>
 
       {/* Ações Rápidas */}
-      <View style={styles.quickActions}>
+      <View style={styles.quickActionsBar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <TouchableOpacity 
-            style={styles.quickActionButton} 
+          <TouchableOpacity
+            style={styles.quickAction}
             onPress={() => handleQuickAction('Quero saber mais sobre as funções e a história do Argos.')}
             activeOpacity={0.6}
           >
             <Text style={styles.quickActionText}>🏛️ História do Argos</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.quickActionButton} 
+          <TouchableOpacity
+            style={styles.quickAction}
             onPress={() => handleQuickAction('Quero entender como funciona o sistema de proteção do IOTRAC.')}
             activeOpacity={0.6}
           >
             <Text style={styles.quickActionText}>🛡️ Sistema de Proteção</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.quickActionButton} 
+          <TouchableOpacity
+            style={styles.quickAction}
             onPress={() => handleQuickAction('status dos dispositivos')}
           >
             <Text style={styles.quickActionText}>Status</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.quickActionButton} 
+          <TouchableOpacity
+            style={styles.quickAction}
             onPress={() => handleQuickAction('configurações de segurança')}
           >
             <Text style={styles.quickActionText}>Segurança</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.quickActionButton} 
+          <TouchableOpacity
+            style={styles.quickAction}
             onPress={() => handleQuickAction('análise de logs')}
           >
             <Text style={styles.quickActionText}>Logs</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.quickActionButton} 
+          <TouchableOpacity
+            style={styles.quickAction}
             onPress={() => handleQuickAction('comandos de proteção')}
           >
             <Text style={styles.quickActionText}>Comandos</Text>
@@ -313,14 +299,15 @@ Como posso ajudá-lo a configurar ou entender melhor alguma dessas proteções? 
       </View>
 
       {/* Input de Mensagem */}
-      <View style={styles.inputContainer}>
+      <View style={styles.inputBar}>
         <TextInput
-          style={styles.textInput}
+          style={styles.input}
           value={inputText}
           onChangeText={setInputText}
           placeholder="Digite sua mensagem..."
           multiline
           maxLength={500}
+          placeholderTextColor={theme.colors.textSecondary}
         />
         <TouchableOpacity
           style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
@@ -330,7 +317,7 @@ Como posso ajudá-lo a configurar ou entender melhor alguma dessas proteções? 
           <Ionicons
             name="send"
             size={20}
-            color={inputText.trim() ? '#000' : '#bbb'}
+            color={'#fff'}
           />
         </TouchableOpacity>
       </View>
@@ -341,137 +328,133 @@ Como posso ajudá-lo a configurar ou entender melhor alguma dessas proteções? 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
   },
-  messagesContainer: {
+  chatScroll: {
     flex: 1,
-    padding: 12,
-    backgroundColor: '#ffffff',
+    padding: 16,
   },
-  messageContainer: {
+  chatRow: {
     flexDirection: 'row',
     marginBottom: 12,
     alignItems: 'flex-end',
   },
-  userMessage: {
+  chatRowUser: {
     justifyContent: 'flex-end',
   },
-  botMessage: {
+  chatRowBot: {
     justifyContent: 'flex-start',
   },
-  botMessageAvatar: {
+  avatar: {
     width: 0,
     height: 0,
     marginRight: 0,
     display: 'none',
   },
-  messageBubble: {
+  bubble: {
     maxWidth: '100%',
     padding: 10,
-    borderRadius: 0,
-    backgroundColor: '#fff',
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d0d0d0',
+    borderColor: theme.colors.neutralBorder,
+    backgroundColor: theme.colors.neutralBackground,
   },
-  userBubble: {
-    backgroundColor: '#fff',
+  bubbleUser: {
     borderBottomRightRadius: 0,
-    borderWidth: 1,
-    borderColor: '#d0d0d0',
+    backgroundColor: theme.colors.primaryOpacity,
   },
-  botBubble: {
-    backgroundColor: '#fff',
+  bubbleBot: {
     borderBottomLeftRadius: 0,
-    borderWidth: 1,
-    borderColor: '#d0d0d0',
+    backgroundColor: theme.colors.neutralBackground,
   },
-  messageText: {
+  bubbleBotText: {
     fontSize: 15,
     lineHeight: 21,
+    color: theme.colors.textPrimary,
   },
-  userMessageText: {
-    color: '#000',
+  bubbleUserText: {
+    fontSize: 15,
+    lineHeight: 21,
+    color: '#fff',
   },
-  botMessageText: {
-    color: '#000',
-  },
-  messageTime: {
+  bubbleTime: {
     fontSize: 11,
-    color: '#888',
+    color: theme.colors.textSecondary,
     marginTop: 4,
     alignSelf: 'flex-end',
   },
-  typingIndicator: {
+  typingRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     marginBottom: 12,
   },
   typingBubble: {
-    backgroundColor: '#fff',
     padding: 10,
-    borderRadius: 0,
+    borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#d0d0d0',
+    borderColor: theme.colors.neutralBorder,
     gap: 8,
+    backgroundColor: theme.colors.neutralBackground,
   },
   typingText: {
     fontSize: 13,
-    color: '#444',
+    color: theme.colors.textSecondary,
   },
-  quickActions: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#fff',
+  quickActionsBar: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: theme.colors.neutralBorder,
+    backgroundColor: theme.colors.neutralBackground,
   },
-  quickActionButton: {
-    backgroundColor: '#fff',
+  quickAction: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 0,
+    borderRadius: 8,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#cfcfcf',
+    borderColor: theme.colors.neutralBorder,
+    backgroundColor: theme.colors.neutralBackground,
   },
   quickActionText: {
     fontSize: 14,
-    color: '#222',
+    color: theme.colors.textPrimary,
     fontWeight: '400',
   },
-  inputContainer: {
+  inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: 12,
-    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    gap: 8,
+    borderTopColor: theme.colors.neutralBorder,
+    backgroundColor: theme.colors.neutralBackground,
   },
-  textInput: {
+  input: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 0,
+    borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 10,
-    maxHeight: 100,
+    maxHeight: 44,
     fontSize: 15,
-    marginRight: 8,
     borderWidth: 1,
-    borderColor: '#cfcfcf',
+    borderColor: theme.colors.neutralBorder,
+    backgroundColor: theme.colors.neutralBackground,
+    color: theme.colors.textPrimary,
   },
   sendButton: {
     width: 44,
     height: 44,
-    borderRadius: 0,
-    backgroundColor: '#ddd',
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#cfcfcf',
+    borderColor: theme.colors.neutralBorder,
+    backgroundColor: theme.colors.primary,
   },
   sendButtonDisabled: {
-    backgroundColor: '#eee',
+    backgroundColor: theme.colors.primaryOpacity,
   },
-}); 
+});
